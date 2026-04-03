@@ -201,31 +201,59 @@ def main() -> None:
                 st.subheader("Voice input (beta)")
                 st.caption("Click Record, speak your reply, then click Insert into reply. Chrome recommended.")
                 js = """
-<div>
-    <button id="recordBtn">Start Recording</button>
-    <button id="stopBtn" disabled>Stop</button>
-    <button id="insertBtn">Insert into reply</button>
-    <div id="status" style="margin-top:8px;color:#444"></div>
-    <textarea id="transcript" rows="4" style="width:100%; margin-top:8px;"></textarea>
-    <script>
-    const recordBtn = document.getElementById('recordBtn');
-    const stopBtn = document.getElementById('stopBtn');
+<div style="font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+<style>
+    .vm-card{display:flex;flex-direction:column;align-items:center;gap:8px;padding:12px;border-radius:12px;background:linear-gradient(180deg,#ffffff,#fbfbfb);box-shadow:0 6px 18px rgba(20,20,30,0.06);}
+    .rec-btn{width:72px;height:72px;border-radius:50%;border:none;background:#f2f2f2;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 160ms ease;box-shadow:0 6px 12px rgba(15,15,20,0.06)}
+    .rec-btn.recording{background:linear-gradient(135deg,#ff6b6b,#ff3b3b);transform:scale(1.05);box-shadow:0 8px 20px rgba(255,59,59,0.18);}
+    .rec-icon{width:28px;height:28px;fill:#333}
+    .rec-btn.recording .rec-icon{fill:#fff}
+    .status{font-size:13px;color:#6b7280}
+    .transcript{width:100%;border-radius:8px;padding:8px;border:1px solid #e6e6e9;background:transparent;resize:none;color:#111;font-size:13px}
+    .controls{display:flex;gap:8px}
+    .ctrl{background:transparent;border:1px solid #ddd;border-radius:8px;padding:6px 10px;cursor:pointer;color:#333}
+    .ctrl.primary{background:#111;color:#fff;border:none}
+    @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(255,59,59,0.28)}70%{box-shadow:0 0 0 16px rgba(255,59,59,0)}100%{box-shadow:0 0 0 0 rgba(255,59,59,0)}}
+    .rec-btn.recording{animation:pulse 1.6s infinite}
+</style>
+<div class="vm-card">
+    <button id="recBtn" class="rec-btn" aria-label="Start/Stop recording">
+        <svg class="rec-icon" viewBox="0 0 24 24"><path d="M12 14a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v5a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 14 0h-2zM11 19h2v3h-2z"/></svg>
+    </button>
+    <div id="status" class="status">Tap microphone to speak</div>
+    <textarea id="transcript" class="transcript" rows="3" placeholder="Transcript will appear here..."></textarea>
+    <div class="controls">
+        <button id="insertBtn" class="ctrl primary">Insert</button>
+        <button id="clearBtn" class="ctrl">Clear</button>
+    </div>
+</div>
+
+<script>
+    const recBtn = document.getElementById('recBtn');
     const insertBtn = document.getElementById('insertBtn');
+    const clearBtn = document.getElementById('clearBtn');
     const status = document.getElementById('status');
     const transcriptEl = document.getElementById('transcript');
 
-    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-        status.innerText = 'SpeechRecognition not supported in this browser. Use Chrome.';
+    let recognition = null;
+    let isRecording = false;
+    let finalTranscript = '';
+
+    function supportsSpeech(){ return ('SpeechRecognition' in window) || ('webkitSpeechRecognition' in window); }
+
+    if (!supportsSpeech()){
+        status.innerText = 'SpeechRecognition not supported. Use Chrome.';
     } else {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        const recognition = new SpeechRecognition();
+        recognition = new SpeechRecognition();
         recognition.interimResults = true;
         recognition.continuous = true;
         recognition.lang = 'en-US';
 
-        recognition.onstart = () => { status.innerText = 'Listening...'; recordBtn.disabled = true; stopBtn.disabled = false; }
-        recognition.onend = () => { status.innerText = 'Stopped.'; recordBtn.disabled = false; stopBtn.disabled = true; }
-        let finalTranscript = '';
+        recognition.onstart = () => { status.innerText = 'Listening…'; recBtn.classList.add('recording'); }
+        recognition.onend = () => { status.innerText = 'Stopped'; recBtn.classList.remove('recording'); isRecording = false; }
+        recognition.onerror = (e) => { status.innerText = 'Error: ' + (e.error || 'unknown'); recBtn.classList.remove('recording'); }
+
         recognition.onresult = (event) => {
             let interim = '';
             for (let i = event.resultIndex; i < event.results.length; ++i) {
@@ -235,39 +263,46 @@ def main() -> None:
                     interim += event.results[i][0].transcript;
                 }
             }
-            transcriptEl.value = finalTranscript + interim;
-        };
-        recordBtn.onclick = () => { finalTranscript = ''; transcriptEl.value=''; recognition.start(); }
-        stopBtn.onclick = () => { recognition.stop(); }
-        insertBtn.onclick = () => {
-            const text = transcriptEl.value;
-            // find Streamlit input by label text
-            const labels = Array.from(document.querySelectorAll('label'));
-            let targetInput = null;
-            for (const lbl of labels) {
-                if (lbl.innerText && lbl.innerText.trim().startsWith('Your reply')) {
-                    const forId = lbl.getAttribute('for');
-                    if (forId) {
-                        const el = document.getElementById(forId);
-                        if (el) { targetInput = el; break; }
-                    }
-                    let sibling = lbl.nextElementSibling;
-                    if (sibling && (sibling.tagName === 'INPUT' || sibling.tagName === 'TEXTAREA')) { targetInput = sibling; break; }
-                }
-            }
-            if (!targetInput) {
-                targetInput = document.querySelector('input[type=text], textarea');
-            }
-            if (targetInput) {
-                targetInput.value = text;
-                targetInput.dispatchEvent(new Event('input', { bubbles: true }));
-                status.innerText = 'Inserted transcript into input.';
-            } else {
-                status.innerText = 'Could not find the reply input. Please copy-paste manually.';
-            }
+            transcriptEl.value = (finalTranscript + ' ' + interim).trim();
         };
     }
-    </script>
+
+    recBtn.onclick = () => {
+        if (!recognition) return;
+        if (!isRecording) {
+            finalTranscript = '';
+            transcriptEl.value = '';
+            try { recognition.start(); isRecording = true; } catch (e) { /* ignore double-start */ }
+        } else {
+            recognition.stop(); isRecording = false;
+        }
+    };
+
+    clearBtn.onclick = () => { finalTranscript=''; transcriptEl.value=''; status.innerText='Cleared'; };
+
+    insertBtn.onclick = () => {
+        const text = transcriptEl.value.trim();
+        if (!text) { status.innerText = 'Nothing to insert.'; return; }
+        const labels = Array.from(document.querySelectorAll('label'));
+        let targetInput = null;
+        for (const lbl of labels) {
+            if (lbl.innerText && lbl.innerText.trim().startsWith('Your reply')) {
+                const forId = lbl.getAttribute('for');
+                if (forId) { const el = document.getElementById(forId); if (el) { targetInput = el; break; } }
+                let sibling = lbl.nextElementSibling;
+                if (sibling && (sibling.tagName==='INPUT' || sibling.tagName==='TEXTAREA')) { targetInput = sibling; break; }
+            }
+        }
+        if (!targetInput) { targetInput = document.querySelector('input[type=text], textarea'); }
+        if (targetInput) {
+            targetInput.value = text;
+            targetInput.dispatchEvent(new Event('input', { bubbles: true }));
+            status.innerText = 'Inserted transcript.';
+        } else {
+            status.innerText = 'Reply input not found; copy-paste instead.';
+        }
+    };
+</script>
 </div>
 """
 
