@@ -10,6 +10,7 @@ from jobmatch_ai.resume_parser import analyze_resume
 from jobmatch_ai.interview_flow import InterviewState, build_chat
 from jobmatch_ai.evaluation import generate_evaluation
 from jobmatch_ai.sandbox import run_code_snippet
+import streamlit.components.v1 as components
 
 load_dotenv()
 st.set_page_config(page_title="JobMatch AI", layout="wide")
@@ -194,6 +195,85 @@ def main() -> None:
                 st.warning("Reply cannot be empty.")
             else:
                 candidate_reply(user_input.strip())
+
+        # Voice recorder component: records speech and inserts transcript into the reply input
+        def voice_recorder_section() -> None:
+                st.subheader("Voice input (beta)")
+                st.caption("Click Record, speak your reply, then click Insert into reply. Chrome recommended.")
+                js = """
+<div>
+    <button id="recordBtn">Start Recording</button>
+    <button id="stopBtn" disabled>Stop</button>
+    <button id="insertBtn">Insert into reply</button>
+    <div id="status" style="margin-top:8px;color:#444"></div>
+    <textarea id="transcript" rows="4" style="width:100%; margin-top:8px;"></textarea>
+    <script>
+    const recordBtn = document.getElementById('recordBtn');
+    const stopBtn = document.getElementById('stopBtn');
+    const insertBtn = document.getElementById('insertBtn');
+    const status = document.getElementById('status');
+    const transcriptEl = document.getElementById('transcript');
+
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+        status.innerText = 'SpeechRecognition not supported in this browser. Use Chrome.';
+    } else {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        const recognition = new SpeechRecognition();
+        recognition.interimResults = true;
+        recognition.continuous = true;
+        recognition.lang = 'en-US';
+
+        recognition.onstart = () => { status.innerText = 'Listening...'; recordBtn.disabled = true; stopBtn.disabled = false; }
+        recognition.onend = () => { status.innerText = 'Stopped.'; recordBtn.disabled = false; stopBtn.disabled = true; }
+        let finalTranscript = '';
+        recognition.onresult = (event) => {
+            let interim = '';
+            for (let i = event.resultIndex; i < event.results.length; ++i) {
+                if (event.results[i].isFinal) {
+                    finalTranscript += event.results[i][0].transcript;
+                } else {
+                    interim += event.results[i][0].transcript;
+                }
+            }
+            transcriptEl.value = finalTranscript + interim;
+        };
+        recordBtn.onclick = () => { finalTranscript = ''; transcriptEl.value=''; recognition.start(); }
+        stopBtn.onclick = () => { recognition.stop(); }
+        insertBtn.onclick = () => {
+            const text = transcriptEl.value;
+            // find Streamlit input by label text
+            const labels = Array.from(document.querySelectorAll('label'));
+            let targetInput = null;
+            for (const lbl of labels) {
+                if (lbl.innerText && lbl.innerText.trim().startsWith('Your reply')) {
+                    const forId = lbl.getAttribute('for');
+                    if (forId) {
+                        const el = document.getElementById(forId);
+                        if (el) { targetInput = el; break; }
+                    }
+                    let sibling = lbl.nextElementSibling;
+                    if (sibling && (sibling.tagName === 'INPUT' || sibling.tagName === 'TEXTAREA')) { targetInput = sibling; break; }
+                }
+            }
+            if (!targetInput) {
+                targetInput = document.querySelector('input[type=text], textarea');
+            }
+            if (targetInput) {
+                targetInput.value = text;
+                targetInput.dispatchEvent(new Event('input', { bubbles: true }));
+                status.innerText = 'Inserted transcript into input.';
+            } else {
+                status.innerText = 'Could not find the reply input. Please copy-paste manually.';
+            }
+        };
+    }
+    </script>
+</div>
+"""
+
+                components.html(js, height=260)
+
+        voice_recorder_section()
 
     if st.session_state.history:
         st.markdown("### Transcript")
