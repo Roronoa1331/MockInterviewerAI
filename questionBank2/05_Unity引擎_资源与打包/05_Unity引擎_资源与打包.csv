@@ -1,0 +1,94 @@
+﻿题目,答案要点,难度,相关岗位,标签,题目类型
+Unity 中常用的资源路径 API 有哪些？,运行时：Application.dataPath（包内只读）、streamingAssetsPath（原始资源路径，平台相关）、persistentDataPath（可读写持久化）；Resources 仅 Resources 目录且 Resources.Load；编辑器内用 AssetDatabase 获取路径、依赖与刷新，打包后不可用。,1,Unity客户端开发,综合,项目经历深挖
+Unity 中有哪些常见的动态加载资源方式？,Instantiate 克隆已加载资源；AssetBundle/Addressables 按需从包体或网络加载，适合热更；Resources.Load 仅 Resources 目录且整包打入；编辑器内 AssetDatabase.LoadAssetAtPath 仅用于开发调试；商业化项目多用 AB/AA + 对象池管理生命周期。,2,Unity客户端开发,综合,技术知识
+AssetBundle 打包时有哪些压缩选项？各有什么取舍？,BuildAssetBundleOptions：默认/LZMA 包体最小但加载解压慢；UncompressedAssetBundle 包体大、IO 快；ChunkBasedCompression（LZ4）在包体与解压速度间折中；按热更带宽与首包启动时延选型，并配合缓存与分块下载策略。,2,Unity客户端开发,综合,技术知识
+AssetBundle 有哪些加载方式？,常用：LoadFromMemory(Async) 适合已读入字节流；LoadFromFile(Async) 适合本地包体；UnityWebRequest + DownloadHandlerAssetBundle 适合下载与缓存；先按 manifest 加载依赖再 LoadAsset；协程/异步注意完成回调与错误处理；旧版 WWW 已弃用。,2,Unity客户端开发,AssetBundle,技术知识
+AssetBundle 应如何正确卸载？,Unload(false) 只卸载包内未使用资源，已实例化对象仍可访问但会丢 manifest 关联，易重复加载或泄漏；Unload(true) 连同已加载实例一并释放，需确保无引用。配合 Destroy 实例与 Resources.UnloadUnusedAssets/切场景策略；用内存分析确认无重复 AB 与材质实例。,2,Unity客户端开发,AssetBundle,行为题
+Prefab 有什么作用？,作为可复用的场景对象模板，统一默认组件、引用与参数；运行时可 Instantiate，修改可同步到实例或做变体；便于版本管理、多人协作与资源分包，减少重复搭建。,1,Unity客户端开发,综合,技术知识
+Unity 中有哪些常见的动态加载资源方式？,Instantiate 克隆已加载资源；AssetBundle/Addressables 按需从包体或网络加载，适合热更；Resources.Load 仅 Resources 目录且整包打入；编辑器内 AssetDatabase.LoadAssetAtPath 仅用于开发调试；商业化项目多用 AB/AA + 对象池管理生命周期。,2,Unity客户端开发,综合,场景题
+请简述 Prefab 的用途？,作为可复用的场景对象模板，统一默认组件、引用与参数；运行时可 Instantiate，修改可同步到实例或做变体；便于版本管理、多人协作与资源分包，减少重复搭建。,1,Unity客户端开发,综合,技术知识
+请列举 Unity 中常用的路径 API（含编辑器与运行时）？,运行时：dataPath、streamingAssetsPath、persistentDataPath；编辑器：AssetDatabase.GetAssetPath/GetDependencies/GetAllAssetPaths、Refresh；System.IO.Directory 用于磁盘目录。注意 streamingAssets 在移动端常为 jar:file 前缀，persistentDataPath 可读写适合做热更与存档。,2,Unity客户端开发,综合,场景题
+Unity 中有哪些常见的动态加载资源方式？,Instantiate 克隆已加载资源；AssetBundle/Addressables 按需从包体或网络加载，适合热更；Resources.Load 仅 Resources 目录且整包打入；编辑器内 AssetDatabase.LoadAssetAtPath 仅用于开发调试；商业化项目多用 AB/AA + 对象池管理生命周期。,2,Unity客户端开发,综合,技术知识
+如何用脚本在编辑器中打出 AssetBundle？,创建输出目录后调用 BuildPipeline.BuildAssetBundles，传入输出路径、BuildAssetBundleOptions（如 ChunkBasedCompression/LZMA/Uncompressed）与 BuildTarget；为资源设置 AB 名与变体；生成 manifest 记录依赖；目标平台需与运行端一致，建议接入 CI 记录版本与哈希。,3,Unity客户端开发,综合,技术知识
+请用协程示例说明 AssetBundle 的异步加载思路？,协程内 yield LoadFromFileAsync/LoadFromMemoryAsync 或 UWR.GetAssetBundle；完成后从 AssetBundle.LoadAssetAsync 再 yield；注意先加载依赖 manifest 中的包；错误与超时要有重试或降级；加载后 Instantiate 并在不用时 Unload 与 Destroy。,3,Unity客户端开发,AssetBundle,场景题
+AssetBundle 应如何正确卸载？,Unload(false) 只卸载包内未使用资源，已实例化对象仍可访问但会丢 manifest 关联，易重复加载或泄漏；Unload(true) 连同已加载实例一并释放，需确保无引用。配合 Destroy 实例与 Resources.UnloadUnusedAssets/切场景策略；用内存分析确认无重复 AB 与材质实例。,2,Unity客户端开发,AssetBundle,技术知识
+资源如何打成 AssetBundle？依赖列表一般怎么产出？,为资源指定 AB 名/变体；用 AssetBundleBuild 数组描述映射；AssetDatabase.GetDependencies 收集依赖避免漏打；调用 BuildPipeline.BuildAssetBundles 输出包体与 manifest；将依赖关系写入自定义版本文件或 manifest 供运行时按序加载。,2,Unity客户端开发,综合,技术知识
+如何解析版本清单并加载 AssetBundle？典型流程是什么？,拉取远端 version/manifest（含包名、hash、依赖）；比对本地缓存决定增量下载；按依赖顺序 LoadFromFileAsync/UWR；LoadAssetAsync 取资源并回调到业务层；失败重试与 CRC 校验；Lua/热更脚本与 AB 解耦时先保证字节码与表版本一致。,2,Unity客户端开发,AssetBundle,项目经历深挖
+在 Unity 移动端项目中做资源与性能优化时，你通常会从哪些方面入手？,AB/AA 做资源分包与热更；控制顶点与骨骼数量、简化粒子与 Animator；少用动态光与阴影；避免移动 Static Collider、慎用 NGUI 等高开销 UI；减少每帧分配与无效重算；结合 Profiler 与真机分档验证；给美术明确规范与检查工具。,3,Unity客户端开发,综合,技术知识
+在 Unity 移动端项目中做资源与性能优化时，你通常会从哪些方面入手？,AB/AA 做资源分包与热更；控制顶点与骨骼数量、简化粒子与 Animator；少用动态光与阴影；避免移动 Static Collider、慎用 NGUI 等高开销 UI；减少每帧分配与无效重算；结合 Profiler 与真机分档验证；给美术明确规范与检查工具。,3,Unity客户端开发,综合,技术知识
+简述 UI 相关资源优化的常见手段？,纹理用平台合适压缩（ASTC/ETC2/PVRTC 等）、控制尺寸与 Mipmap；Sprite Atlas 合图减 DrawCall；九宫格与公用图集；Texture Streaming/细节贴图减轻超大原图；注意字体与 UI 图集分离导致合批打断；低利用率图集合并；用 Frame Debugger 验证批次。,2,Unity客户端开发,综合,项目经历深挖
+Prefab 是什么？,可复用的场景对象模板，含组件与层级；修改可同步到实例（可断开链接）；支持变体与嵌套。,2,Unity客户端开发,综合,技术知识
+使用 Prefab 有什么好处？,提升复用与迭代效率、团队协作与版本合并更可控；便于热更粒度划分；减少场景重复劳动。,2,Unity客户端开发,综合,技术知识
+Prefab 是什么？,可复用的场景对象模板，含组件与层级；修改可同步到实例（可断开链接）；支持变体与嵌套。,2,Unity客户端开发,综合,技术知识
+使用 Prefab 有什么好处？,提升复用与迭代效率、团队协作与版本合并更可控；便于热更粒度划分；减少场景重复劳动。,2,Unity客户端开发,综合,项目经历深挖
+结合 Unity 项目经验，请说明「高效复用性」指什么、常见用法及注意点？,Prefab/变体与嵌套Prefab让同一资源在多处实例化且可统一迭代；减少重复场景搭建；注意Override与合并规则，避免引用丢失。,2,Unity客户端开发,综合,技术知识
+结合 Unity 项目经验，请说明「一致性维护」指什么、常见用法及注意点？,Prefab 与源资产单向同步；用Prefab Mode与版本管理约束美术/策划误改实例；多分支合并注意 YAML 冲突与 GUID。,2,Unity客户端开发,综合,项目经历深挖
+结合 Unity 项目经验，请说明「模块化开发」指什么、常见用法及注意点？,按功能切分Prefab与AB分组，边界清晰便于并行与热更；配合ScriptableObject配置解耦逻辑与资源。,2,Unity客户端开发,综合,项目经历深挖
+结合 Unity 项目经验，请说明「对象池技术」指什么、常见用法及注意点？,预分配/复用GameObject降低Instantiate与GC峰值；注意OnEnable/Reset状态清理、池大小与峰值内存；结合Profiler看GC与实例化 spikes。,2,Unity客户端开发,综合,技术知识
+Unity 中约定俗成的特殊文件夹有哪些？各自作用是什么？,常见：Resources（Resources.Load，整包打入）、StreamingAssets（原始文件只读）、Editor（仅编辑器编译）、Plugins（原生插件与平台实现）、Gizmos（Scene 调试用资源）等；与 Standard Assets、StreamingAssets 路径平台差异要分清，避免把 Editor 脚本打进 Player。,2,Unity客户端开发,综合,项目经历深挖
+Unity 里常说的「持久化目录」主要指哪些路径？,核心是 Application.persistentDataPath：用户可写、随安装与用户变化，适合存档、热更缓存与日志；注意备份、清理与权限；不要与只读的 dataPath/streamingAssets 混用。,2,Unity客户端开发,综合,技术知识
+Unity 中约定俗成的特殊文件夹有哪些？各自作用是什么？,常见：Resources（Resources.Load，整包打入）、StreamingAssets（原始文件只读）、Editor（仅编辑器编译）、Plugins（原生插件与平台实现）、Gizmos（Scene 调试用资源）等；与 Standard Assets、StreamingAssets 路径平台差异要分清，避免把 Editor 脚本打进 Player。,2,Unity客户端开发,综合,技术知识
+Unity 里常说的「持久化目录」主要指哪些路径？,核心是 Application.persistentDataPath：用户可写、随安装与用户变化，适合存档、热更缓存与日志；注意备份、清理与权限；不要与只读的 dataPath/streamingAssets 混用。,2,Unity客户端开发,综合,技术知识
+结合 Unity 项目经验，请说明「Resources」指什么、常见用法及注意点？,Resources.Load 同步加载 Resources 下资源；该目录资源会打进包体且难以热更卸载；新项目更推荐 Addressables/AssetBundle。,2,Unity客户端开发,综合,技术知识
+结合 Unity 项目经验，请说明「StreamingAssets」指什么、常见用法及注意点？,打包后保持原始文件，路径随平台变化；常用 UnityWebRequest 读取；适合只读配置、视频等大文件。,2,Unity客户端开发,综合,技术知识
+结合 Unity 项目经验，请说明「Editor」指什么、常见用法及注意点？,Editor 文件夹下脚本仅在编辑器编译，可放工具链；注意 asmdef 划分避免把 Editor 代码打进 Player。,2,Unity客户端开发,综合,技术知识
+结合 Unity 项目经验，请说明「Editor Default Resources」指什么、常见用法及注意点？,编辑器内部加载资源路径（EditorGUIUtility.Load 等）；与运行时 Resources 无关，勿混用。,2,Unity客户端开发,综合,技术知识
+结合 Unity 项目经验，请说明「Plugins」指什么、常见用法及注意点？,存放 native 插件（.dll/.so 等）与平台专用实现；区分 Editor/Player、CPU 架构；IL2CPP/Mono 链接与调试成本需评估。,2,Unity客户端开发,综合,项目经历深挖
+结合 Unity 项目经验，请说明「Standard Assets」指什么、常见用法及注意点？,旧版示例与导入规范遗留目录；新项目少用，避免与 Package Manager 资源重复或升级困难。,2,Unity客户端开发,综合,技术知识
+结合 Unity 项目经验，请说明「Gizmos」指什么、常见用法及注意点？,Scene 视图调试绘制（Gizmos.Draw* / OnDrawGizmos）；仅编辑器可见，勿依赖其做运行时逻辑。,2,Unity客户端开发,综合,技术知识
+结合 Unity 项目经验，请说明「Hidden Assets」指什么、常见用法及注意点？,以 . 开头或特定隐藏规则的资源，导入器可能忽略或不在 Project 窗口展示；用于管线扩展时需注意可见性与打包。,2,Unity客户端开发,综合,技术知识
+什么是AssetBundle？,Unity 将资源打成可外部加载的包，支持热更与按需下载；含 manifest 记录依赖与哈希。,1,Unity客户端开发,AssetBundle,场景题
+AssetBundle与Resources区别？,Resources 编译进包、路径硬编码、难热更；AB 可外置与差分更新，需自建管理与依赖加载。,1,Unity客户端开发,AssetBundle,场景题
+AssetBundle 应如何加载与卸载？,加载：LoadFromFile/Async、LoadFromMemory、UWR；实例化后 AB 可Unload(false)；无引用时再 UnloadUnusedAssets；避免材质 .material 造成实例泄漏。,2,Unity客户端开发,AssetBundle,行为题
+加载方式都有哪一些？,同步/异步 API、边下边玩（UWR）、本地缓存；按平台选 IO 与线程模型；注意依赖包先加载。,2,Unity客户端开发,综合,技术知识
+卸载策略都有哪一些？,按关卡卸载包、引用计数、LRU；慎用Unload(true)；监控重复实例与材质泄漏。,2,Unity客户端开发,综合,技术知识
+AB 包加载失败如何解决？,校验路径、hash、CDN与版本表；依赖是否先行；线程/权限；重试与降级资源；看日志与 CRC。,2,Unity客户端开发,综合,行为题
+AssetBundle 或资源版本冲突时通常如何处理？,客户端 manifest 与服务端不一致时拒绝混用；强更或回滚；AB 与 Player 版本号解耦设计。,2,Unity客户端开发,综合,行为题
+Unity 项目中资源或引用导致的内存泄漏常见原因有哪些？,重复加载未卸载、材质 Instantiate、事件未取消、静态引用持有资源；Memory Profiler 查重复与引用链。,2,Unity客户端开发,内存,场景题
+如何理解并减少 Unity 项目中的资源冗余？,同贴图打进多包、未抽公共依赖；用依赖分析与共享包；避免随意 Instantiate 材质。,2,Unity客户端开发,综合,场景题
+什么是AssetBundle？,Unity 将资源打成可外部加载的包，支持热更与按需下载；含 manifest 记录依赖与哈希。,1,Unity客户端开发,AssetBundle,技术知识
+AssetBundle与Resources区别？,Resources 编译进包、路径硬编码、难热更；AB 可外置与差分更新，需自建管理与依赖加载。,1,Unity客户端开发,AssetBundle,技术知识
+AssetBundle 应如何加载与卸载？,加载：LoadFromFile/Async、LoadFromMemory、UWR；实例化后 AB 可Unload(false)；无引用时再 UnloadUnusedAssets；避免材质 .material 造成实例泄漏。,2,Unity客户端开发,AssetBundle,项目经历深挖
+加载方式都有哪一些？,同步/异步 API、边下边玩（UWR）、本地缓存；按平台选 IO 与线程模型；注意依赖包先加载。,2,Unity客户端开发,综合,技术知识
+卸载策略都有哪一些？,按关卡卸载包、引用计数、LRU；慎用Unload(true)；监控重复实例与材质泄漏。,2,Unity客户端开发,综合,技术知识
+AB 包加载失败如何解决？,校验路径、hash、CDN与版本表；依赖是否先行；线程/权限；重试与降级资源；看日志与 CRC。,2,Unity客户端开发,综合,行为题
+结合 Unity 项目经验，请说明「打包流程」指什么、常见用法及注意点？,划分AB粒度、处理依赖与变体、生成 manifest；用 BuildPipeline.BuildAssetBundles 或 SBP；输出与版本号、CDN路径对齐。,2,Unity客户端开发,综合,技术知识
+结合 Unity 项目经验，请说明「加载与卸载」指什么、常见用法及注意点？,LoadFromFile/Memory、UnityWebRequest 等加载；Unload(false) 仅卸包内未用资源，true 会卸已实例化引用导致丢材质；配合 Resources.UnloadUnusedAssets 与场景切换策略。,2,Unity客户端开发,综合,技术知识
+Unity 中对纹理、音频、网格等资源有哪些常见压缩与导入策略？,纹理按平台选压缩与尺寸；音频 Vorbis/ADPCM；网格压缩；动画关键帧缩减；视频用平台硬解格式。,2,Unity客户端开发,综合,技术知识
+结合 Unity 项目经验，请说明「移动端（Android/iOS）」指什么、常见用法及注意点？,纹理选 ASTC/ETC2/PVRTC 等平台格式；音频压缩；降低同时常驻AB；注意内存峰值与低端机分档。,2,Unity客户端开发,综合,项目经历深挖
+结合 Unity 项目经验，请说明「PC/主机端」指什么、常见用法及注意点？,可用更高分辨率与更少压缩限制；关注显存与流送；HDR/分辨率缩放与画质档位。,2,Unity客户端开发,综合,技术知识
+结合 Unity 项目经验，请说明「优化技巧」指什么、常见用法及注意点？,合图集与共享材质、控制同步加载、异步 Instantiate、对象池、剔除与LOD；用 Memory Profiler 查重复与泄漏。,2,Unity客户端开发,综合,技术知识
+AssetBundle 压缩算法都有哪一些？,LZMA（包体小解压慢）、LZ4/ChunkBased（均衡）、不压缩（IO快包体大）；按下载带宽与启动时延选型。,2,Unity客户端开发,AssetBundle,项目经历深挖
+如何设置压缩方式？,BuildPipeline.BuildAssetBundleOptions 或 SBP 中指定；不同组可用不同策略；记录到构建流水线参数。,2,Unity客户端开发,综合,场景题
+AssetBundle 压缩算法都有哪一些？,LZMA（包体小解压慢）、LZ4/ChunkBased（均衡）、不压缩（IO快包体大）；按下载带宽与启动时延选型。,2,Unity客户端开发,AssetBundle,技术知识
+如何设置压缩方式？,BuildPipeline.BuildAssetBundleOptions 或 SBP 中指定；不同组可用不同策略；记录到构建流水线参数。,2,Unity客户端开发,综合,技术知识
+如何跨平台打出 AssetBundle？,为每个目标平台分别 Build；资源导入设置随平台变；禁止混用不同平台打出的 AB。,2,Unity客户端开发,AssetBundle,技术知识
+结合 Unity 项目经验，请说明「资源标记与分组」指什么、常见用法及注意点？,用 AssetBundle 名/Addressable 标签表达逻辑分组；共享依赖打进 shared 包减少冗余；避免循环依赖与过度细碎。,2,Unity客户端开发,综合,技术知识
+结合 Unity 项目经验，请说明「配置打包参数」指什么、常见用法及注意点？,BuildAssetBundleOptions：LZMA/LZ4/不压缩、DisableWriteTypeTree、StrictMode 等；按网络与CPU权衡。,2,Unity客户端开发,综合,技术知识
+结合 Unity 项目经验，请说明「打包」指什么、常见用法及注意点？,指定输出目录、目标平台与压缩；增量构建注意清缓存；校验 manifest 与 hash。,2,Unity客户端开发,综合,技术知识
+结合 Unity 项目经验，请说明「资源标记」指什么、常见用法及注意点？,显式指定 AB 名或 AA 地址；避免同资源多包重复；依赖自动收集要可复现。,2,Unity客户端开发,综合,技术知识
+结合 Unity 项目经验，请说明「关键配置」指什么、常见用法及注意点？,压缩、类型树、增量、强制重建；与 CI 参数一致；记录 Unity 版本与哈希。,2,Unity客户端开发,综合,技术知识
+结合 Unity 项目经验，请说明「打包输出」指什么、常见用法及注意点？,.bundle/.manifest/依赖列表；配合版本文件做差分热更；校验CDN一致性。,2,Unity客户端开发,综合,技术知识
+结合 Unity 项目经验，请说明「资源准备」指什么、常见用法及注意点？,资源规范（命名、只读引用）、导入设置统一、剔除无用；大图拆图集与九宫格。,2,Unity客户端开发,综合,技术知识
+结合 Unity 项目经验，请说明「打包配置」指什么、常见用法及注意点？,平台宏、脚本后端、图形 API；与 AB 目标平台一致；记录 Scriptable Build Pipeline 配置资产。,2,Unity客户端开发,综合,场景题
+结合 Unity 项目经验，请说明「输出文件」指什么、常见用法及注意点？,主包、依赖包、manifest、hash 文件；客户端按版本拉取并校验完整性。,2,Unity客户端开发,综合,技术知识
+结合 Unity 项目经验，请说明「依赖管理」指什么、常见用法及注意点？,用 manifest 或自建依赖表先加载依赖再加载主包；避免重复加载与版本错配；Editor 下 AssetDatabase.GetDependencies 辅助排查。,2,Unity客户端开发,综合,技术知识
+AssetBundle 打包粒度一般如何划分？有哪些权衡？,按场景/系统/共享资源分层；粒度细利于热更但 manifest 与请求多；粒度粗易冗余；按访问相关性折中。,2,Unity客户端开发,AssetBundle,场景题
+资源卸载的注意事项？,Unload 参数与引用计数心里要有数；材质/贴图实例化会断开共享；切场景可 UnloadUnusedAssets 但会卡顿，宜分帧或择时调用。,2,Unity客户端开发,综合,技术知识
+资源卸载的注意事项？,Unload 参数与引用计数心里要有数；材质/贴图实例化会断开共享；切场景可 UnloadUnusedAssets 但会卡顿，宜分帧或择时调用。,2,Unity客户端开发,综合,技术知识
+图集打包后Draw Call未减少？,材质或纹理仍不一致、Mask/RectMask2D 打断、Canvas 过多、图集未命中同一 Atlas、UI 与文字图集混排；用 Frame Debugger 验证。,2,Unity客户端开发,综合,技术知识
+若面试围绕「物体发生碰撞的必要条件？」展开，在性能敏感的模块中你会如何落地实现与验证效果？,先答条件：双方需有 Collider、至少一方带 Rigidbody（非 Kinematic 与 Kinematic 规则需讲清）、Layer 碰撞矩阵允许；再答落地：用 Profiler 看 Physics 耗时、Continuous 检测档位、减少动态刚体与复杂 MeshCollider；验证用重现场景 + 物理调试视图 + 真机分档。,2,Unity客户端开发,物理,行为题
+Canvas 的渲染模式与 Canvas Scaler 的缩放模式分别有哪些？面试时你会怎样组织回答？,先一句话结论：Canvas 渲染模式决定 UI 与相机/世界的关系，Canvas Scaler 决定分辨率适配策略。再分点：渲染模式含 Overlay（最上层不经相机）、Camera（指定相机与平面距离）、World Space（3D 场景 UI）；Scaler 常用 Constant Pixel Size、Scale With Screen Size（参考分辨率+匹配模式）、Constant Physical Size。坑点：多 Canvas 打断排序与合批；Scaler 与锚点混用导致拉伸异常；World Space 需注意事件射线与缩放。,3,Unity客户端开发,综合,场景题
+若面试围绕「协同程序的执行代码是什么？有何用处，有何缺点?」展开，在性能敏感的模块中你会如何落地实现与验证效果？,先用 Profiler/Frame Debugger 建立基线与热点路径；把逻辑拆到合适更新周期（Update/FixedUpdate/分帧），避免在热点路径上分配托管内存。对关键路径做 A/B 对比与真机分档验证；必要时用 Memory Profiler 查 GC 与泄漏，并记录回归指标。,3,Unity客户端开发,综合,行为题
+若被问到「请简述关键字Sealed用在类声明和函数声明时的作用」，你会如何组织回答结构（结论、要点、常见坑）？,类声明 sealed：禁止被继承，有助于 JIT 去虚化并明确设计边界。方法上 sealed（配合 override）：禁止子类再次重写该方法，锁定多态链末端行为。注意：滥用 sealed 会降低扩展性，通常用于性能敏感路径或安全封闭 API。,1,Unity客户端开发,综合,场景题
+若面试围绕「GameObject a=new GameObject() GameObject b=a 实例化出来了A，将A赋给B，现在将B删除，问A还存在吗？」展开，在性能敏感的模块中你会如何落地实现与验证效果？,Destroy 销毁引擎对象后引用可能呈“假 null”；避免在热点路径频繁 Instantiate/Destroy，可配合对象池。用 Memory Profiler 看托管与原生泄漏；验证销毁顺序与事件取消订阅，防止悬挂引用。,2,Unity客户端开发,综合,行为题
+若被问到「Mathf.Round和Mathf.Clamp和Mathf.Lerp含义？」，你会如何组织回答结构（结论、要点、常见坑）？,"Mathf.Round：四舍五入到最近整数（.5 取偶银行家舍入，需注意与直觉差异）。Mathf.Clamp：把值限制在 [min,max]；Mathf.Lerp：线性插值 t∈[0,1] 可做平滑跟随（配合平滑阻尼更佳）。坑：浮点误差、Lerp 每帧同 t 导致渐近不收敛，常用指数平滑或固定半衰期。",2,Unity客户端开发,综合,场景题
+若面试围绕「MeshRender中material和sharedmaterial的区别？」展开，在性能敏感的模块中你会如何落地实现与验证效果？,sharedMaterial：共享资产上的材质，改动影响所有引用该材质的 Renderer，并可能写回磁盘资源。material 属性：访问时会为当前 Renderer 创建材质实例，适合单独改色但易打断合批与泄漏。实践：展示只读用 sharedMaterial；需独立参数用 material 并管理实例生命周期。,1,Unity客户端开发,综合,行为题
+若被问到「Unity3d提供了一个用于保存和读取数据的类(PlayerPrefs)，请列出保存和读取整形数据的函数」，你会如何组织回答结构（结论、要点、常见坑）？,"存整数：PlayerPrefs.SetInt(key, value)；读：PlayerPrefs.GetInt(key, defaultValue)。要点：键名规范与默认值；平台持久化位置不同；仅适合轻量偏好，不适合存档防篡改或大数据。坑：非线程安全、明文可篡改，敏感数据需加密或放服务端。",2,Unity客户端开发,综合,场景题
+若面试围绕「简述Unity3D支持的作为脚本的语言的名称？」展开，在性能敏感的模块中你会如何落地实现与验证效果？,Unity 主要用 C#（Mono/.NET/IL2CPP）；ShaderLab/HLSL 用于 Shader；可通过包或原生插件接入其他语言运行时，但官方脚本主体是 C#。,1,Unity客户端开发,综合,行为题
+若被问到「什么叫动态合批？跟静态合批有什么区别？」，你会如何组织回答结构（结论、要点、常见坑）？,动态合批：运行时把相同材质且满足顶点数等条件的网格合并提交，减少 DrawCall，但有 CPU 开销与限制。静态合批：对标记为静态的物体离线合并网格，运行时成本低但内存占用可能上升。坑：材质实例化、不同缩放、Shader 变体、SRP/URP 下策略与 Built-in 有差异，需用 Frame Debugger 验证。,1,Unity客户端开发,UI,场景题
+若面试围绕「将Camera组件的ClearFlags选项选成Depth only是什么意思？有何用处？」展开，在性能敏感的模块中你会如何落地实现与验证效果？,跟随相机常在 LateUpdate 处理，保证在角色 Update 移动之后再对齐，减少抖动。物理相关相机可用 FixedUpdate；Cinemachine 等插件内部已处理更新顺序。性能：避免每帧 GetComponent/LINQ；缓存引用与插值。,2,Unity客户端开发,综合,行为题
+若被问到「FSM有限状态机」，你会如何组织回答结构（结论、要点、常见坑）？,FSM：有限状态 + 转移条件 + 进入/退出/更新钩子，适合角色 AI、UI 流程等离散行为。要点：避免状态爆炸可用分层状态机或 HFSM；转移表驱动易测试。坑：并发事件、回退栈、与动画/网络状态不同步需明确优先级与队列。,3,Unity客户端开发,综合,场景题
+若面试围绕「Image和RawImage的区别」展开，在性能敏感的模块中你会如何落地实现与验证效果？,结论：Image 走 Sprite/图集管线，RawImage 直接采样任意 Texture。要点：Image 支持九宫格与多种 Image Type，更利于 UGUI 合批；RawImage 适合 RenderTexture、视频贴图等。坑：RawImage 若材质/贴图与周围 UI 不一致易打断合批；动态纹理需注意释放与尺寸。,1,Unity客户端开发,UI,行为题
+若被问到「协同程序的执行代码是什么？有何用处，有何缺点?」，你会如何组织回答结构（结论、要点、常见坑）？,针对「协同程序的执行代码是什么？有何用处，有何缺点?」：先用一句话给结论；再分 2~4 点讲原理或步骤；最后点出 Unity/项目里的坑（性能、内存、线程、版本差异）。如涉资源或渲染，补充你如何用工具有验证（Profiler、Frame Debugger、Memory Profiler）。,5,Unity客户端开发,综合,场景题
+若面试围绕「Socket 客户端 队列 的问题」展开，在性能敏感的模块中你会如何落地实现与验证效果？,客户端常用发送/接收队列解耦网络线程与主线程：网络层收包入队，主线程 Update/LateUpdate 出队处理。要点：锁或单写多读无锁队列、背压与限流、包粘拆半包处理、断线重连状态机。验证：压测并发连接、乱序与重传、内存增长与 GC。,2,Unity客户端开发,综合,行为题

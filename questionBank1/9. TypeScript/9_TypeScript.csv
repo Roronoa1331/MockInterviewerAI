@@ -1,0 +1,38 @@
+﻿题目,答案要点,难度,相关岗位,标签,题目类型
+说说对 TypeScript 中命名空间与模块的理解？区别？,模块是TS基于ES模块的规范，任何包含顶级import或export的文件都是模块，用于封装代码、管理依赖，避免全局变量冲突。命名空间使用namespace定义，本质是全局对象，用于解决全局标识符重名问题。区别在于模块可以声明依赖，适合项目开发；命名空间无法清晰管理依赖，仅适合给JS库做类型声明，日常开发推荐使用模块而非命名空间。,3,web前端开发/全栈开发,TypeScript、接口、namespace、class,技术知识
+说说你对 typescript 的理解？与 javascript 的区别？,TS是JS的超集，支持ES6与面向对象特性，提供静态类型检查，在编译阶段发现类型错误，最终编译为JS运行。与JS相比，TS是静态类型语言，有类型注解、接口、泛型等；JS是动态类型语言，无编译期类型检查。TS文件后缀为ts/tsx/d.ts，JS为js，TS能兼容JS代码，同时增强代码可读性与可维护性。,3,web前端开发/全栈开发,TypeScript、类型推断、泛型、接口,技术知识
+Typescript中泛型是什么？,泛型是在定义函数、接口、类时不预先指定具体类型，使用时再指定类型的特性，用于提升代码复用性，避免重复定义。通过<T>表示类型参数，可用于函数、接口、类，支持多类型参数与泛型约束，能在不丢失类型信息的前提下处理多种类型数据，解决any类型不安全的问题。,3,web前端开发/全栈开发,TypeScript、联合类型、泛型、接口,技术知识
+TypeScript中有哪些声明变量的方式？,TS支持let声明变量、const声明常量、var声明变量（不推荐），可在函数作用域、函数参数中声明，也能通过对象字面量、数组字面量、接口、类声明变量，所有声明都可添加类型注解规范类型。,3,web前端开发/全栈开发,TypeScript、作用域、接口、class,技术知识
+什么是Typescript的方法重载？,方法重载是为同一个函数定义多个参数类型或数量不同的签名，TS在编译期根据参数匹配对应签名，实现更严格的类型检查与推断，实际运行时只有一个函数体处理所有情况，用于统一函数入口并区分不同参数逻辑。,2,web前端开发/全栈开发,TypeScript、类型推断、接口,技术知识
+请实现下面的 sleep 方法,"export function sleep(ms: number): Promise<undefined> { return new Promise(resolve => { setTimeout(() => resolve(undefined), ms); }); }",2,web前端开发/全栈开发,TypeScript、Promise、export,技术知识
+typescript 中的 is 关键字有什么用？,is关键字用于类型谓词函数，实现类型保护，在运行时判断变量是否属于指定类型，让TS在后续代码中自动收窄类型，常用于联合类型或类实例的类型判断。,2,web前端开发/全栈开发,TypeScript、class、this、let,技术知识
+TypeScript支持的访问修饰符有哪些？,TS支持public、protected、private三种访问修饰符，public表示公共可访问，protected允许类与子类访问，private仅允许当前类访问，未指定时默认为public。,2,web前端开发/全栈开发,TypeScript,技术知识
+请补充 objToArray 函数,"function objToArray(obj: Record<string, Record<string, string>>): FormatItem[] { return Object.keys(obj).reduce((res, key) => { const [op] = Object.keys(obj[key]); res.push({ key, op, value: obj[key][op] }); return res; }, [] as FormatItem[]); }",2,web前端开发/全栈开发,TypeScript、var、export,技术知识
+使用TS实现一个判断传入参数是否是数组类型的方法？,function isArray(arg: unknown): boolean { return Array.isArray(arg); },3,web前端开发/全栈开发,TypeScript,技术知识
+TypeScript 的内置数据类型有哪些？,TS内置类型包括boolean、number、string、void、null、undefined、symbol，复合类型有array、tuple、enum、any、unknown、object，还有never、联合类型、交叉类型等高级类型。,1,web前端开发/全栈开发,TypeScript、Symbol、枚举,技术知识
+ts中any和unknown有什么区别？,any和unknown都是顶级类型，any会关闭类型检查，可任意访问属性与赋值；unknown更安全，使用前必须做类型检查，不能直接访问属性，也不能赋值给其他明确类型变量。,2,web前端开发/全栈开发,TypeScript、let,技术知识
+如何将 unknown 类型指定为一个更具体的类型？,可通过typeof、instanceof等类型判断收窄类型，或使用类型断言（as）强制指定类型，断言错误会在运行时报错。,2,web前端开发/全栈开发,TypeScript、const、编译,技术知识
+使用ts实现一个判断入参是否是数组类型的方法？,function isArray(input: unknown): boolean { return Array.isArray(input); },3,web前端开发/全栈开发,TypeScript,技术知识
+tsconfig.json文件有什么用？,tsconfig.json是TS项目的配置文件，用于指定编译选项、编译范围、输出目录、严格检查规则等，标识项目根目录，让编译器按配置编译代码。,2,web前端开发/全栈开发,TypeScript、作用域、Promise、Generator,技术知识
+TypeScript中的 Declare 关键字有什么用？,declare用于环境声明，为无类型定义的JS库、全局变量提供类型声明，告诉TS对应变量或方法已存在，避免编译报错，不生成实际JS代码。,2,web前端开发/全栈开发,TypeScript、var、编译,技术知识
+解释一下TypeScript中的枚举,枚举是TS的数据类型，用于定义一组命名常量，分为数字枚举与字符串枚举，可通过名称取值或通过值取名称，让代码语义更清晰，便于限定取值范围。,2,web前端开发/全栈开发,TypeScript、枚举,技术知识
+TypeScript 的主要特点是什么？,TS跨平台、支持ES6特性、面向对象、静态类型检查、可选静态类型，可操作DOM，能编译为兼容各环境的JS代码，提升大型项目的可维护性。,2,web前端开发/全栈开发,TypeScript、箭头函数、接口、DOM,技术知识
+TypeScript中的方法重写是什么？,方法重写是子类重新定义父类中同名、同参的方法，通过extends继承后覆盖父类实现，必须保持方法签名一致，通过super调用父类原方法。,2,web前端开发/全栈开发,TypeScript、class、继承、let,技术知识
+什么是TypeScript映射文件？,TS映射文件即.map文件，是源映射文件，记录TS源码与编译后JS的对应关系，让调试工具可直接调试TS源码，而非转换后的JS。,2,web前端开发/全栈开发,TypeScript,技术知识
+TypeScript中的类型有哪些？,TS类型分为内置原始类型（number、string等）与用户定义类型（枚举、类、接口、数组、元组），还支持联合、交叉、泛型等高级类型。,2,web前端开发/全栈开发,TypeScript、接口、枚举,技术知识
+如何检查TypeScript中的null和undefined ？,可使用宽松判断if(x == null)同时匹配null和undefined，使用严格相等===区分null，使用typeof判断是否为undefined。,2,web前端开发/全栈开发,TypeScript、var,技术知识
+如何在TypeScript中实现继承？,TS通过extends关键字实现类继承，子类继承父类的属性与方法，可重写方法，通过super调用父类构造函数与方法。,2,web前端开发/全栈开发,TypeScript、class、继承、this,技术知识
+什么是TypeScript Declare关键字？,declare用于声明全局变量、模块、类型，为JS库提供类型定义，不生成实际代码，仅用于TS编译检查，避免未定义报错。,3,web前端开发/全栈开发,TypeScript、var、编译,技术知识
+TypeScript 和 JavaScript 的区别是什么？,TS是JS的超集，静态类型、编译期检查、支持接口泛型；JS是动态类型、运行时检查、无额外类型语法。TS文件为ts/tsx，JS为js，TS最终编译为JS运行。,2,web前端开发/全栈开发,TypeScript、接口、编译,技术知识
+Typescript中什么是类类型接口？,类类型接口用于约束类的行为，定义类必须实现的属性与方法，类通过implements实现接口，一个类可实现多个接口，接口仅约束公有成员。,2,web前端开发/全栈开发,TypeScript、接口,技术知识
+Typescript中never 和 void 的区别？,void表示无返回值，可赋值为null/undefined；never表示永远不存在的值，函数无法正常返回或抛出异常时使用，never是任何类型的子类型，无值可赋值给never。,2,web前端开发/全栈开发,TypeScript,技术知识
+Typescript中 interface 和 type 的差别是什么？,interface与type都可描述对象与函数并支持扩展，interface可声明合并，适合定义对象结构；type可声明基本类型别名、联合类型、元组，适合复杂类型定义，优先使用interface。,2,web前端开发/全栈开发,TypeScript、联合类型、接口、let,技术知识
+说一说TypeScript中的类及其特性,TS类是面向对象实现，包含构造函数、属性、方法，支持继承、封装、多态、抽象特性，编译为普通JS函数，通过访问修饰符控制成员可见性。,2,web前端开发/全栈开发,TypeScript、class、继承、this,技术知识
+TypeScript中的变量以及如何声明？,变量是存储值的命名空间，通过let、const、var声明，变量名只能以字母、下划线、$开头，声明时可加类型注解，遵循JS变量命名规则。,2,web前端开发/全栈开发,TypeScript,技术知识
+TypeScript 中的类是什么？你如何定义它们？,类是一组对象的属性与行为抽象，使用class关键字定义，包含构造函数、属性、方法，可通过extends继承、implements实现接口。,2,web前端开发/全栈开发,TypeScript、class、this,技术知识
+TypeScript 中的 getter/setter 是什么？你如何使用它们？,getter/setter是访问器方法，用于读取和修改私有属性，实现数据封装与校验，get用于获取值，set用于赋值并可做逻辑限制。,2,web前端开发/全栈开发,TypeScript、class、this、let,技术知识
+Typescript中什么是装饰器，它们可以应用于什么？,装饰器是@符号标记的声明，用于修改类、方法、属性、参数，运行时执行对应函数，需开启experimentalDecorators配置，可用于类声明、方法、访问器、属性、参数。,2,web前端开发/全栈开发,TypeScript、装饰器、JSON、编译,技术知识
+解释如何使用 TypeScript mixin？,mixin是组合式继承，通过合并多个类的功能创建新类，将多个类的方法复制到目标类，实现多继承效果，灵活扩展类功能。,2,web前端开发/全栈开发,TypeScript、继承,技术知识
+TypeScript 中的类型断言是什么？,类型断言用于告诉编译器变量的确定类型，类似类型转换但不影响运行时，语法为值 as 类型 或 <类型>值，仅用于编译期类型推断。,2,web前端开发/全栈开发,TypeScript、编译,技术知识
+TypeScript 中的模块是什么？,TS模块是包含变量、函数、类、接口的独立文件，通过export导出、import引入，遵循ES模块规范，用于代码拆分与复用，避免全局污染。,2,web前端开发/全栈开发,TypeScript、接口、class、export,技术知识
+为什么推荐使用 TypeScript ？,TS提供静态类型检查，提前发现错误，代码更易读易维护，支持面向对象与泛型，兼容JS生态，提升大型项目开发效率，减少线上类型相关BUG。,3,web前端开发/全栈开发,TypeScript、泛型、编译,技术知识

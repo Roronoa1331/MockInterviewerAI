@@ -20,9 +20,14 @@ BEHAVIORAL_GUIDELINES = "Ask 1-2 behavioral questions (failure, conflict, owners
 CLOSING = "Close politely and mention that an evaluation will follow."
 
 
-def build_system_prompt(persona: str | None, stack_summary: str, resume_projects: List[str], candidate_name: str = "Candidate") -> str:
+def build_system_prompt(persona: str | None, stack_summary: str, resume_projects: List[str], candidate_name: str = "Candidate", language: str = "en") -> str:
     persona_text = persona.strip() if persona else DEFAULT_PERSONA
     project_hint = "\n".join(f"- {p}" for p in resume_projects[:3]) or "- No projects found"
+    language_instruction = (
+        "Respond in simplified Chinese. Use Chinese for all candidate-facing questions and summaries."
+        if language == "zh"
+        else "Respond in English. Use English for all candidate-facing questions and summaries."
+    )
     return (
         f"{persona_text}\n"
         f"You are interviewing {candidate_name}.\n"
@@ -33,7 +38,9 @@ def build_system_prompt(persona: str | None, stack_summary: str, resume_projects
         f"Closing guidance: {CLOSING}\n"
         "Always remember prior answers to ask relevant follow-ups (maintain memory).\n"
         "Keep replies concise (<=120 words) unless explicitly asked to expand.\n"
+        "If you are provided a specific technical question from the question bank, ask that exact question and do not invent another question.\n"
         "Ground the first technical questions in the candidate projects below.\n"
+        f"{language_instruction}\n"
         "Candidate stack summary (use to tune depth):\n"
         f"{stack_summary}\n"
         "Candidate projects (prioritize for initial questions):\n"

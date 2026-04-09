@@ -1,0 +1,387 @@
+﻿题目,答案要点,难度,相关岗位,标签,题目类型
+React Portals 有什么用？,React Portals提供了一种将子节点渲染到存在于父组件DOM层级之外的DOM节点的方式。它的核心作用是突破父组件的DOM结构限制，比如当需要创建模态框、弹窗、提示框这类组件时，这些组件往往需要脱离当前组件的DOM层级（避免父组件的样式限制如overflow:hidden、z-index层级问题），同时又能保留React组件的上下文（如事件冒泡、props传递、状态管理等），使得组件的逻辑仍属于当前React组件树，只是渲染的DOM节点在外部，既满足DOM结构的特殊需求，又不破坏React组件的封装性和事件机制。,3,web前端开发,React、z-index、DOM、this,技术知识
+react 和 react-dom 是什么关系？,React是核心库，包含了React的核心概念如组件、虚拟DOM、JSX语法解析、状态管理等核心逻辑，它并不依赖于具体的渲染环境，可用于不同的平台（如React Native、React DOM、React VR等）；而react-dom是专门针对浏览器DOM环境的渲染库，负责将React核心库创建的虚拟DOM转换为真实的DOM节点，处理DOM的挂载、更新、卸载等操作，是React核心库与浏览器DOM之间的桥梁。简单来说，React定义了组件的逻辑和虚拟DOM的结构，react-dom负责将这些逻辑和结构渲染到浏览器的DOM中，二者分工明确，React核心库不包含DOM相关的渲染逻辑，需配合react-dom才能在网页中使用。,2,web前端开发,React、DOM、const、import,技术知识
+React 中为什么不直接使用 requestIdleCallback？,首先，requestIdleCallback是浏览器提供的API，用于在浏览器空闲时段调用回调函数，但它存在一些限制：一是浏览器的兼容性问题，部分旧版本浏览器不支持；二是执行时机不可靠，浏览器的空闲时间不确定，可能导致回调执行延迟，影响React更新的时效性；三是requestIdleCallback的触发频率较低，且优先级控制不够精细，无法满足React对更新调度的高要求（如区分不同优先级的更新，如用户输入、动画这类高优先级任务需优先执行）。因此React实现了自己的调度器（Scheduler），模拟并增强了requestIdleCallback的功能，不仅解决了兼容性问题，还能精细控制任务的优先级、执行时机和中断恢复，确保高优先级任务优先执行，低优先级任务在空闲时执行，提升应用的响应性。,3,web前端开发,React,技术知识
+为什么 react 需要 fiber 架构，而 Vue 却不需要？,"React需要Fiber架构的核心原因是其更新机制的特性：React默认会递归遍历组件树进行虚拟DOM的对比（Reconciliation），这个过程是同步且不可中断的，当组件树庞大时，长时间的同步计算会阻塞浏览器的主线程，导致页面卡顿（如无法及时响应用户输入、动画掉帧）。Fiber架构将更新过程拆分为一个个小的工作单元，能够按需中断、暂停、恢复或放弃某个工作单元，配合调度器根据任务优先级执行，解决了同步更新阻塞主线程的问题。
+而Vue不需要类似Fiber的架构，是因为Vue的响应式系统和更新机制不同：Vue通过Object.defineProperty（Vue2）或Proxy（Vue3）追踪依赖，能够精准定位到需要更新的组件，而非递归遍历整个组件树，更新的粒度更细；同时Vue的更新过程本身设计为异步批量更新，且内部做了优化（如异步队列、nextTick），能够将多次更新合并，减少DOM操作，其更新过程的耗时本身可控，不会出现长时间阻塞主线程的情况，因此无需通过Fiber这种拆分工作单元、可中断的架构来优化。此外，Vue3的响应式系统和编译优化（如PatchFlags、静态提升）进一步提升了更新效率，也无需依赖Fiber架构。",5,web前端开发,React、Fiber、懒加载、响应式,技术知识
+子组件是一个 Portal，发生点击事件能冒泡到父组件吗？,能。虽然Portal渲染的DOM节点在父组件的DOM层级之外，但React的事件系统是基于虚拟DOM的合成事件系统，并非原生DOM的事件冒泡。React会将整个React组件树视为一个整体，Portal组件依然属于React组件树的一部分，其触发的合成事件会按照React组件树的层级进行冒泡，而非DOM节点的层级。例如，父组件中包含一个通过Portal渲染到body下的子组件，点击该子组件触发的点击事件，依然能在父组件的onClick事件处理函数中捕获到，这保证了组件逻辑上的事件冒泡机制不受DOM渲染位置的影响。,2,web前端开发,React、事件冒泡、代理模式、Context,技术知识
+React 为什么要废弃 componentWillMount、componentWillReceiveProps、componentWillUpdate 这三个生命周期钩子？它们有哪些问题呢？React 又是如何解决的呢？,"React废弃这三个生命周期（简称“unsafe_”生命周期）的核心原因是它们存在不可预测的副作用和与React新特性（如Fiber、并发模式）不兼容的问题。
+具体问题：一是这三个钩子在React的渲染流程中可能被多次调用，且执行时机不可靠。比如在Fiber架构下，组件的更新过程可能被中断、恢复甚至重新执行，导致这些钩子被重复调用，若在其中执行异步操作（如请求数据）、修改状态或DOM操作，会引发重复请求、状态不一致、内存泄漏等问题；二是componentWillReceiveProps容易被滥用，开发者常在此处根据props更新状态，导致状态来源不清晰，增加组件复杂度；三是这些钩子属于“挂载/更新前”的阶段，逻辑上容易产生副作用，违背了React倡导的纯函数、可预测的组件设计理念。
+React的解决方式：一是提供了更安全的生命周期替代方案，如用componentDidMount替代componentWillMount（数据请求、订阅等副作用移至componentDidMount，确保只执行一次）；用static getDerivedStateFromProps替代componentWillReceiveProps（该方法是纯函数，无副作用，仅根据props计算状态，避免了状态更新的不可预测性）；用getSnapshotBeforeUpdate替代componentWillUpdate（在DOM更新前获取快照，用于后续componentDidUpdate中处理，避免在更新前执行副作用）；二是推广函数式组件和Hooks，Hooks（如useEffect）的设计更符合React的异步更新和并发模式，能够更清晰地管理副作用，避免生命周期钩子的滥用和副作用问题；三是将这三个钩子标记为unsafe_前缀，明确不建议使用，引导开发者迁移到新的生命周期或Hooks。",2,web前端开发,React、Fiber、this,技术知识
+说说React render方法的原理？在什么时候会被触发？,"React render方法的原理：对于类组件，render方法是类组件的核心方法，它返回一个React元素（虚拟DOM），描述了组件应该渲染的内容，该方法本身是纯函数（不修改组件状态、不产生副作用、相同输入返回相同输出）；对于函数组件，整个函数体就相当于render方法，执行后返回虚拟DOM。React会将render返回的虚拟DOM转换为真实DOM（通过react-dom），当组件状态或属性变化时，render会重新执行生成新的虚拟DOM，React通过对比新旧虚拟DOM（Diff算法），计算出需要更新的最小DOM操作，然后批量更新真实DOM，这个过程称为Reconciliation（协调）。
+render方法的触发时机：一是组件首次挂载时，会执行render方法生成初始虚拟DOM；二是组件的props发生变化时（父组件传递的props更新，即使是浅比较变化）；三是组件自身的state通过setState更新时（无论setState的参数是否导致state实际变化，除非在shouldComponentUpdate中返回false）；四是当组件的父组件重新渲染时，即使子组件的props未变化，子组件也会默认重新执行render（可通过React.memo/shouldComponentUpdate优化）；五是调用forceUpdate方法时，会强制触发render方法（跳过shouldComponentUpdate的判断）；六是在函数组件中，当组件的状态（useState）、上下文（useContext）变化，或依赖的props变化时，函数组件会重新执行（即相当于render触发）。",4,web前端开发,React、useState、Babel、class,技术知识
+说说React事件和原生事件的执行顺序,"React事件是合成事件，其底层基于原生事件的事件委托实现，事件绑定在document上（React17及以后绑定在根节点），而非直接绑定在DOM元素上。执行顺序上，原生事件的捕获阶段先执行，然后是React合成事件的处理阶段（React合成事件没有捕获阶段的API，只有冒泡阶段，但其内部会模拟冒泡），最后是原生事件的冒泡阶段。
+具体来说，若在同一个DOM元素上同时绑定原生事件（如addEventListener）和React合成事件（如onClick）：原生事件的捕获阶段（capture为true）会先触发；接着触发React合成事件；最后触发原生事件的冒泡阶段（capture为false）。若在React合成事件的处理函数中调用event.stopPropagation()，只能阻止React合成事件的冒泡，无法阻止原生事件的冒泡；若在原生事件中调用event.stopPropagation()，则会阻止React合成事件的触发（因为React合成事件的委托节点在后续的冒泡阶段）。",2,web前端开发,React、事件委托、useEffect、useRef,技术知识
+说说对受控组件和非受控组件的理解，以及应用场景？,"受控组件是指组件的状态由React的state控制，表单元素（如input、select、textarea）的值与state保持同步，每次表单元素的值变化时，会通过onChange事件更新state，从而控制表单元素的值。受控组件的核心是“数据源唯一”，表单元素的值完全由React状态驱动，能够实时响应状态变化，便于对表单数据进行验证、格式化、联动等操作。
+非受控组件是指组件的状态由DOM自身管理，React不直接控制其值，而是通过ref获取DOM元素的当前值，类似于原生HTML的表单操作。非受控组件无需编写onChange事件处理每个值的变化，适合快速开发简单表单，其值的获取通常在提交时进行，而非实时更新。
+应用场景：受控组件适用于需要实时处理表单数据的场景，如表单验证（实时校验输入内容）、表单联动（一个输入框的变化影响另一个输入框）、动态禁用/启用表单元素、需要实时显示表单数据预览等，例如注册表单的实时手机号校验、搜索框的实时联想提示；非受控组件适用于简单的表单场景，如一次性提交的简单表单（如登录表单，仅在点击提交时获取值）、文件上传组件（input type=""file""只能通过ref获取文件，属于非受控）、集成第三方UI库且无需实时控制的表单元素，或对性能要求极高、避免频繁onChange触发重渲染的场景。",2,web前端开发,React、受控组件、非受控组件、class,技术知识
+你在React项目中是如何使用Redux的? 项目结构是如何划分的？,"在React项目中使用Redux时，首先会引入redux、react-redux（连接Redux和React组件），若需要处理异步操作还会引入redux-thunk、redux-saga等中间件。核心使用流程：一是定义action types（常量），避免硬编码；二是编写action creators，返回描述动作的对象（异步action则返回函数，需中间件支持）；三是编写reducer函数，根据action type更新state，保持reducer纯函数特性；四是通过createStore创建store，结合中间件（如applyMiddleware(thunk)）；五是在根组件通过Provider将store传递给所有子组件；六是在组件中通过useSelector（函数组件）/connect（类组件）获取state，通过useDispatch/connect的dispatch方法触发action，更新store中的状态。
+项目结构划分遵循模块化和单一职责原则，通常在src目录下创建store文件夹，内部细分：一是actions文件夹，按业务模块（如user、cart、order）拆分action文件，存放对应模块的action types和action creators；二是reducers文件夹，同样按业务模块拆分reducer文件，通过combineReducers合并所有reducer；三是middleware文件夹，存放自定义中间件；四是index.js文件，创建并导出store；五是selectors文件夹（可选），存放基于state的派生数据计算函数（如reselect优化）；六是types文件夹（TS项目），存放Redux相关的类型定义。组件目录中，页面组件通过hooks/connect连接Redux，UI组件仅接收props，不直接依赖Redux，保证组件的复用性和低耦合。",4,web前端开发,React、Redux、class、this,项目经历深挖
+说说对Redux中间件的理解？常用的中间件有哪些？实现原理？,"Redux中间件是介于action被派发（dispatch）到reducer处理之间的扩展点，用于增强Redux的dispatch方法，能够拦截、修改、延迟、记录action，处理异步操作、日志记录、错误捕获等副作用逻辑，是Redux实现异步流和扩展功能的核心机制。中间件遵循函数式编程范式，是一个高阶函数，接收store的dispatch和getState方法，返回一个接收next的函数，再返回一个接收action的函数，形成链式调用。
+常用的Redux中间件：一是redux-thunk，允许action creators返回函数而非纯对象，该函数接收dispatch和getState作为参数，可在函数内部执行异步操作（如请求数据），完成后再dispatch真正的action；二是redux-saga，通过生成器函数（Generator）处理异步流程，支持更复杂的异步逻辑（如取消请求、重试、并发），将异步逻辑与组件解耦；三是redux-logger，用于记录每一次action的派发和state的变化，方便开发调试；四是redux-promise，允许action creators返回Promise对象，当Promise resolve时自动派发对应的action；五是redux-observable，基于RxJS处理异步流，适合复杂的事件流场景。
+实现原理：Redux的createStore方法接收applyMiddleware返回的 enhancer，applyMiddleware会将传入的中间件组合成一个链式调用的函数。当调用dispatch(action)时，action会先经过所有中间件的处理，每个中间件可以决定是否传递action给下一个中间件（调用next(action)），或拦截action、延迟dispatch、修改action等，最终传递到原始的dispatch方法，触发reducer更新state。核心是通过函数柯里化和组合，将多个中间件串联，形成“洋葱模型”，action从外层进入，经过每个中间件处理后，最终到达reducer，处理完成后再反向返回。",5,web前端开发,React、Redux、HTTP、const、中间件,场景题
+说说你对Redux的理解？其工作原理？,"Redux是一个基于Flux架构的JavaScript状态管理库，用于管理应用的全局状态，核心思想是单一数据源、状态只读、使用纯函数修改状态，旨在解决复杂应用中状态共享、状态变更可追踪、组件间通信复杂的问题。Redux不依赖于React，可与任意前端框架结合，但常与React配合使用（通过react-redux）。
+Redux的工作原理遵循单向数据流：一是Store，存储应用的唯一全局状态树，提供getState（获取状态）、dispatch（派发action）、subscribe（订阅状态变化）方法；二是Action，是描述状态变化的纯对象，必须包含type字段表示动作类型，可携带payload传递数据，由action creators创建；三是Reducer，是纯函数，接收当前state和action，根据action type返回新的state，不能修改原state，只能返回新对象，多个reducer可通过combineReducers合并；四是当组件需要修改状态时，调用dispatch方法派发action；五是Store接收到action后，将当前state和action传入reducer，reducer计算并返回新的state；六是Store更新状态后，通知所有订阅者（组件），组件重新获取state并更新视图。
+整个流程是单向的：组件触发action → dispatch派发action → reducer处理action生成新state → store更新state → 组件订阅state变化并重新渲染，保证了状态变化的可预测性和可追踪性，便于调试和测试。",4,web前端开发,React、Redux、Context、DOM,技术知识
+说说你对immutable的理解？如何应用在react项目中？,"Immutable（不可变数据）是指数据创建后不可被修改，若要修改数据，需创建新的副本，原数据保持不变。JavaScript中的原始类型（如字符串、数字）是不可变的，但引用类型（对象、数组）是可变的，直接修改会导致原数据变化，引发不可预测的副作用（如React组件因引用未变而未重新渲染、Redux state被意外修改）。Immutable数据的核心特性是持久化数据结构，修改操作会生成新数据，且复用原数据的未修改部分，提升性能；同时可快速判断数据是否变化（通过引用对比），无需深比较。
+在React项目中应用Immutable的方式：一是使用Immutable.js库（如List、Map、Set等数据结构），将React组件的state、Redux的state替换为Immutable数据结构，修改时通过set、push等方法生成新的Immutable对象，避免直接修改原数据；二是使用Immer库，通过produce函数创建draft（草稿），在draft上直接修改，produce会返回不可变的新数据，语法更接近原生JavaScript，学习成本更低；三是在Redux中，reducer必须返回新的state，使用Immutable数据可简化reducer的编写，避免深拷贝，且通过引用对比快速判断state是否变化；四是在React组件的shouldComponentUpdate或React.memo中，直接对比Immutable数据的引用，替代深比较，提升性能；五是在useMemo/useCallback的依赖数组中，使用Immutable数据，确保依赖变化的判断准确。",2,web前端开发,React、let、const、Map,项目经历深挖
+说说React Jsx转换成真实DOM过程？,"React JSX转换为真实DOM的过程分为三个核心阶段：JSX编译阶段、虚拟DOM创建阶段、真实DOM渲染阶段。
+首先是JSX编译阶段：JSX本身是JavaScript的语法扩展，无法被浏览器直接识别，在构建过程中（如Babel）会将JSX编译为React.createElement函数调用。例如`<div className=""box"">Hello</div>`会被编译为React.createElement(""div"", {className: ""box""}, ""Hello"")，该函数接收元素类型（标签名/组件）、属性对象、子节点等参数，返回一个描述DOM结构的普通JavaScript对象，即虚拟DOM（Virtual DOM），包含type（元素类型）、props（属性）、children（子节点）等字段。
+然后是虚拟DOM创建阶段：React.createElement执行后生成虚拟DOM树，虚拟DOM是对真实DOM的抽象描述，不依赖于浏览器环境，仅存在于内存中，相比真实DOM操作更轻量、更快。
+最后是真实DOM渲染阶段：通过react-dom的render（React18前）或createRoot（React18）方法，将虚拟DOM树渲染到指定的真实DOM容器中。React会遍历虚拟DOM树，创建对应的真实DOM节点，挂载到容器中；当组件状态或props变化时，会生成新的虚拟DOM树，React通过Diff算法对比新旧虚拟DOM树的差异，计算出最小的DOM操作（如新增、删除、更新节点），然后批量执行这些操作，更新真实DOM，这个过程称为协调（Reconciliation），最终完成视图的更新。",4,web前端开发,React、Babel、class、DOM,技术知识
+说说你在React项目是如何捕获错误的？,"在React项目中，错误捕获分为不同层级，核心目标是捕获渲染、事件处理、异步操作中的错误，避免应用崩溃，提升用户体验。
+一是组件层级的错误捕获：使用React的错误边界（Error Boundary），即类组件中实现componentDidCatch(error, info)方法（可选getDerivedStateFromError静态方法），错误边界组件可以捕获其子组件树中（渲染、生命周期、构造函数）的错误，不会捕获自身错误、事件处理中的错误、异步操作（如setTimeout、Promise）中的错误、服务端渲染错误。在getDerivedStateFromError中返回新的state，用于显示错误备用UI；在componentDidCatch中记录错误日志（如上报到监控平台）。函数组件可通过封装类组件的错误边界，作为高阶组件或父组件包裹需要捕获错误的子组件。
+二是事件处理和异步操作的错误捕获：React合成事件中的错误无法被错误边界捕获，需在事件处理函数中使用try/catch捕获；异步操作（如Promise、async/await、setTimeout）中的错误，需在Promise的catch方法、try/catch中捕获，例如使用async/await时，包裹try/catch块，捕获异步请求的错误。
+三是全局错误捕获：使用window.onerror捕获全局的JavaScript运行时错误，使用window.unhandledrejection捕获未处理的Promise拒绝错误，这些全局捕获机制可作为兜底，捕获错误边界和try/catch未覆盖的错误，记录日志并提示用户。
+四是第三方库和工具：结合Sentry、Fundebug等错误监控工具，集成到项目中，自动捕获并上报错误信息（包括堆栈、环境、用户信息），便于定位和修复问题；在Redux中间件中捕获异步action的错误，统一处理请求失败的逻辑。",3,web前端开发,React、class、this,项目经历深挖
+说说React服务端渲染怎么做？原理是什么？,"React服务端渲染（SSR）是指在服务器端将React组件渲染为HTML字符串，发送到客户端后，客户端激活（hydrate）为可交互的React应用，核心目标是提升首屏加载速度、优化SEO。
+实现步骤：一是搭建服务器环境（如Node.js + Express/Koa）；二是创建React组件（确保组件可在服务端和客户端复用，避免使用window、document等浏览器特有API）；三是在服务器端，使用react-dom/server的renderToString（React18前）或renderToPipeableStream/renderToReadableStream（React18，流式渲染）方法，将根组件渲染为HTML字符串，同时预取组件所需的数据源（如接口请求），将数据注入到HTML中（如window.__INITIAL_STATE__）；四是服务器将包含HTML字符串和初始数据的页面发送给客户端；五是客户端加载React代码后，使用react-dom的hydrateRoot（React18）方法，将服务器渲染的HTML激活为可交互的React应用，复用已有的DOM节点，绑定事件处理函数，完成客户端激活。
+原理：服务端渲染的核心是“同构”，即组件代码在服务端和客户端共用，服务端负责首次渲染的HTML生成，客户端负责后续的交互和更新。服务端渲染时，React会在服务器内存中创建虚拟DOM，然后将其转换为HTML字符串，这个过程不涉及DOM事件绑定，仅生成静态HTML；客户端激活阶段，React会对比虚拟DOM和服务器生成的HTML，复用现有DOM节点，绑定事件处理函数，使静态HTML变为可交互的应用，避免客户端重新渲染整个DOM树，提升性能。此外，SSR通过预加载数据、发送完整的HTML，解决了单页应用首屏加载慢、SEO差的问题，因为搜索引擎可抓取到完整的HTML内容。",4,web前端开发,React、Express、Webpack、Babel,技术知识
+React Fiber 是如何实现更新过程可控？,"React Fiber将更新过程拆分为多个独立的工作单元（Fiber节点对应一个组件的更新工作），每个工作单元可独立执行、中断、暂停、恢复或放弃，核心通过以下机制实现更新过程可控：
+一是Fiber数据结构：Fiber节点是一个链表结构，包含type（组件类型）、props、state、child（子节点）、sibling（兄弟节点）、return（父节点）、effectTag（更新类型）、expirationTime/lane（优先级）等字段，每个Fiber节点对应一个工作单元，通过链表结构可实现遍历过程的中断和恢复（递归遍历改为循环遍历，可随时暂停）。
+二是优先级调度：每个工作单元都有优先级（如用户输入、动画为高优先级，数据请求为低优先级），调度器（Scheduler）会根据优先级高低安排工作单元的执行顺序，高优先级的工作单元可中断低优先级的工作单元，优先执行，确保用户交互等关键操作的响应性。
+三是工作循环（Work Loop）：分为调度阶段（Scheduler）和提交阶段（Commit）。调度阶段可中断，遍历Fiber树，执行每个工作单元的更新（如计算虚拟DOM差异），标记需要更新的节点（effectTag）；提交阶段不可中断，根据标记的effectTag执行真实DOM的增删改操作。调度阶段中，每执行完一个工作单元，会检查是否有更高优先级的任务，或浏览器是否有空闲时间（通过requestIdleCallback/自定义调度器），若没有则暂停，等浏览器空闲后恢复执行。
+四是中断与恢复：通过保存当前执行的Fiber节点（工作单元），当需要中断时，记录当前执行位置，下次恢复时从该位置继续遍历，无需重新开始整个更新过程，实现更新过程的可控。",3,web前端开发,React、Fiber、递归、链表,技术知识
+Fiber 为什么是 React 性能的一个飞跃？,"Fiber架构从根本上解决了React旧版同步更新机制的性能瓶颈，是React性能提升的核心原因：
+一是解决主线程阻塞问题：旧版React的更新过程是同步递归的，当组件树庞大时，长时间的同步计算会阻塞浏览器主线程，导致用户输入、动画、页面滚动等操作卡顿。Fiber将更新拆分为可中断的小工作单元，每执行一个单元就检查浏览器的空闲状态，若有高优先级任务（如用户点击）则暂停更新，优先处理用户交互，确保应用的响应性，彻底解决了“掉帧”问题。
+二是优先级调度机制：Fiber引入了任务优先级概念，不同类型的更新（如用户输入、动画、数据加载）赋予不同优先级，高优先级任务可中断低优先级任务，确保关键操作（如输入框打字、按钮点击）优先执行，提升用户体验，而旧版React所有更新无优先级区分，一律同步执行。
+三是提升更新效率：Fiber的链表结构使遍历过程可中断、恢复，无需重复计算已处理的节点；同时，Fiber在调度阶段仅标记需要更新的节点，提交阶段批量执行DOM操作，减少了不必要的DOM交互，提升了更新效率。
+四是为新特性奠定基础：Fiber架构支持了React的并发模式、Suspense、时间切片（Time Slicing）等新特性，这些特性进一步优化了异步渲染、数据加载的体验，使React能够更好地处理复杂应用的性能问题，是React从同步渲染迈向异步可控渲染的关键，因此成为性能的飞跃。",5,web前端开发,React、Fiber、递归、链表,技术知识
+setState 是同步，还是异步的？,"React中setState的执行并非简单的同步或异步，其行为取决于调用的场景：
+一是异步场景（批量更新）：在React的合成事件（如onClick、onChange）、生命周期钩子（如componentDidMount、componentWillUpdate）中，setState是异步的，React会将多个setState调用合并为一个批量更新，延迟更新state和触发组件重渲染，目的是减少DOM操作次数，提升性能。此时，调用setState后立即访问this.state，获取的仍是更新前的值，需通过setState的第二个参数（回调函数）或componentDidUpdate中访问更新后的state。
+二是同步场景：在原生DOM事件（如addEventListener绑定的事件）、定时器（setTimeout/setInterval）、Promise回调、async/await等异步操作中，setState是同步的，调用后会立即更新state，且同步触发组件重渲染，此时立即访问this.state可获取更新后的值。
+React18中，引入了并发渲染（Concurrent Mode），默认开启自动批量更新，即使在原生事件、定时器等场景下，setState也会被批量处理，变为异步；若需强制同步更新，可使用flushSync包裹setState调用。核心逻辑是React通过判断调用栈是否在自己的更新流程中，决定是否批量处理setState，从而控制其同步/异步行为。",2,web前端开发,React、Promise,技术知识
+简述下 React 的事件代理机制？,"React的事件系统是合成事件（SyntheticEvent）机制，底层基于原生事件的事件代理实现，核心目的是统一事件处理逻辑、兼容不同浏览器、优化性能。
+具体实现：一是事件绑定层面，React不会将事件直接绑定在目标DOM元素上，而是将所有合成事件的处理函数委托到根节点（React17及以后）或document（React16及以前），仅在根节点绑定一个原生事件监听器，而非每个元素都绑定，减少了内存占用和事件绑定开销；二是事件触发层面，当目标元素触发原生事件时，事件会冒泡到根节点，根节点的监听器捕获到事件后，React会创建合成事件对象（封装原生事件，提供统一的API，如stopPropagation、preventDefault，兼容不同浏览器的事件差异），然后根据虚拟DOM树的结构，找到对应的组件事件处理函数，执行该函数；三是事件池（React17前），合成事件对象会被复用，事件处理函数执行完后，合成事件的属性会被清空，避免频繁创建对象，提升性能（React17移除了事件池）。
+事件代理的优势：一是减少事件绑定的数量，提升性能；二是统一处理跨浏览器的事件差异，开发者无需关注不同浏览器的事件API区别；三是配合虚拟DOM，事件处理函数与组件的关联更紧密，即使DOM结构变化，也无需重新绑定事件；四是便于实现合成事件的冒泡、捕获（React合成事件仅暴露冒泡API，但内部可模拟）等逻辑。",2,web前端开发,React、事件委托、事件冒泡,技术知识
+为什么不能在循环、条件或嵌套函数中调用 Hooks？,"React Hooks的设计依赖于调用顺序的稳定性，React通过维护一个Hooks调用的链表，按顺序记录每个Hook的状态（如useState的state、useEffect的依赖），若在循环、条件或嵌套函数中调用Hooks，会导致每次组件渲染时Hooks的调用顺序不一致，破坏React对Hooks状态的追踪，引发状态错乱、更新异常等问题。
+具体原因：一是React在渲染组件时，会按照Hooks的调用顺序来匹配对应的状态，例如第一次渲染时依次调用useState(A)、useState(B)，React会将A的状态存在链表第一个位置，B的状态存在第二个位置；若第二次渲染时，因条件判断跳过了useState(A)，直接调用useState(B)，React会错误地将B的状态匹配到链表第一个位置，导致状态与Hook对应关系错乱；二是循环中调用Hook，循环次数的变化会改变Hook的调用数量和顺序；嵌套函数中调用Hook，嵌套函数的执行时机不确定，也会导致Hook调用顺序不稳定。
+React的规则要求：只在函数组件的顶层调用Hooks，不在循环、条件、嵌套函数中调用，确保每次渲染时Hooks的调用顺序完全一致，这样React才能正确追踪每个Hook的状态，保证Hooks的正常工作。",2,web前端开发,React、useState、Fiber、Hooks,技术知识
+说说你对 useContext 的理解,"useContext是React Hooks提供的用于消费上下文（Context）的钩子，目的是简化函数组件中获取Context值的方式，替代类组件中的static contextType或Context.Consumer组件。
+使用方式：首先通过React.createContext创建一个Context对象（可指定默认值），然后在父组件中通过Context.Provider提供Context的值，子组件中通过useContext(Context)直接获取最近的Provider提供的值，无需嵌套Consumer组件，简化了代码结构。
+核心特性：一是useContext接收Context对象作为参数，返回该Context的当前值，当前值由离当前组件最近的Provider的value属性决定；二是当Provider的value值变化时，使用useContext的组件会自动重新渲染，即使父组件使用React.memo优化，若Context值变化，子组件仍会重渲染；三是useContext的参数必须是Context对象本身（如createContext的返回值），而非Context.Provider或Context.Consumer；四是默认值仅在组件没有匹配到任何Provider时生效，并非Provider的fallback值。
+应用场景：适用于组件层级较深、跨组件传递数据的场景（如主题、语言、用户信息），避免了通过props逐层传递（props drilling），简化了组件间的状态共享，相比Context.Consumer，useContext使代码更简洁、可读性更高。",2,web前端开发,React、useState、useContext、Context,技术知识
+说说你对 useMemo 的理解,"useMemo是React Hooks提供的用于缓存计算结果的钩子，核心作用是优化函数组件的性能，避免不必要的重复计算。
+useMemo接收两个参数：第一个参数是一个函数，返回需要缓存的计算结果（该函数应为纯函数）；第二个参数是依赖数组，当依赖数组中的值发生变化时，useMemo会重新执行第一个参数的函数，计算新的结果并缓存；若依赖数组为空，仅在组件首次渲染时计算一次；若不传递依赖数组，每次组件渲染都会重新计算。
+核心特性：一是useMemo缓存的是“计算结果”，适用于计算开销较大的场景（如复杂的数组过滤、排序、数据转换），避免每次组件渲染都重复执行这些耗时计算；二是useMemo的缓存是浅比较依赖数组中的值，若依赖是引用类型（对象、数组），需确保引用的稳定性（如使用useState、useCallback），否则会导致不必要的重新计算；三是useMemo不能替代React.memo，useMemo缓存的是计算结果，React.memo缓存的是组件渲染结果，二者结合使用可提升性能；四是useMemo的执行时机是在组件渲染期间，因此不能在useMemo中执行副作用操作（副作用应放在useEffect中）。
+应用场景：当组件中有大量的计算逻辑，且计算结果仅依赖特定的变量时，使用useMemo缓存计算结果，减少重复计算；当需要将计算结果作为props传递给子组件时，使用useMemo确保引用的稳定性，避免子组件不必要的重渲染。",2,web前端开发,React、虚拟DOM、useState、useMemo,技术知识
+说说你对自定义hook的理解,"自定义Hook是基于React内置Hooks封装的可复用函数，以“use”开头命名，目的是抽离组件中的通用逻辑，实现逻辑复用，使组件代码更简洁、易维护，自定义Hook可以调用其他Hook（内置或自定义），遵循React Hooks的所有规则。
+核心特性：一是自定义Hook是纯函数，仅封装逻辑，不返回JSX，返回值可根据需求设计（如状态、方法、数据），不同组件使用同一个自定义Hook时，各自拥有独立的状态，不会共享状态；二是必须遵循Hooks的规则，如只能在函数组件/自定义Hook的顶层调用，不能在循环、条件中调用；三是自定义Hook的命名必须以“use”开头，这是React的约定，便于开发者识别，也便于lint工具检查Hooks规则的遵守情况；四是自定义Hook可封装任意逻辑，如数据请求、表单处理、定时器管理、本地存储、事件监听等，将组件中的通用逻辑抽离，降低耦合。
+应用场景：当多个组件需要实现相同的逻辑时（如获取用户信息、监听窗口大小变化、处理表单验证），将这些逻辑封装为自定义Hook，在组件中调用即可复用逻辑，例如useRequest（封装异步请求逻辑）、useLocalStorage（封装本地存储逻辑）、useWindowSize（封装监听窗口大小逻辑）等，提升代码复用性和可维护性。",2,web前端开发,React、深拷贝、useState、闭包,技术知识
+如何让 useEffect 支持 async/await？,"useEffect的第一个参数要求是一个函数，该函数可以返回清理函数（或undefined），而async函数的返回值是Promise对象，并非清理函数，因此不能直接将useEffect的回调函数设为async，否则会导致React无法正确处理清理逻辑，引发警告和潜在的内存泄漏问题。
+实现方式：一是在useEffect内部定义async函数，然后调用该函数，例如：
+```javascript
+useEffect(() => {
+const fetchData = async () => {
+const res = await fetch('/api/data');
+const data = await res.json();
+// 处理数据
+};
+fetchData();
+// 清理函数
+return () => { /* 清理逻辑 */ };
+}, []);
+```
+二是使用IIFE（立即执行函数表达式），将async函数立即执行，例如：
+```javascript
+useEffect(() => {
+(async () => {
+const res = await fetch('/api/data');
+const data = await res.json();
+// 处理数据
+})();
+return () => { /* 清理逻辑 */ };
+}, []);
+```
+三是封装自定义Hook（如useAsyncEffect），统一处理async/await和清理逻辑，避免重复代码，例如：
+```javascript
+const useAsyncEffect = (effect, deps) => {
+useEffect(() => {
+const abortController = new AbortController();
+const execute = async () => {
+await effect(abortController.signal);
+};
+execute();
+return () => abortController.abort();
+}, deps);
+};
+// 使用
+useAsyncEffect(async (signal) => {
+const res = await fetch('/api/data', { signal });
+const data = await res.json();
+// 处理数据
+}, []);
+```
+核心要点是确保useEffect的回调函数返回的是清理函数（而非Promise），async逻辑在内部执行，同时可通过AbortController等方式处理异步操作的中断，避免内存泄漏。",3,web前端开发,React、Promise、Generator、Iterator、async/await,技术知识
+我们应该在什么场景下使用 useMemo 和 useCallback ？,"useMemo和useCallback都是React Hooks提供的性能优化工具，核心是缓存（useMemo缓存计算结果，useCallback缓存函数引用），避免不必要的重渲染或重复计算，需在确有性能问题时使用，避免过度优化。
+useMemo的使用场景：一是组件中有开销较大的计算逻辑（如复杂的数组排序、过滤、数据转换、数学计算），且计算结果仅依赖特定的依赖项，使用useMemo缓存计算结果，避免每次渲染重复计算；二是将计算结果作为props传递给子组件（尤其是使用React.memo优化的子组件），使用useMemo确保结果的引用稳定性，避免子组件因引用变化而不必要的重渲染；三是避免每次渲染创建新的引用类型值（如对象、数组），导致依赖数组判断错误（如useEffect依赖该值时，每次渲染都触发）。
+useCallback的使用场景：一是将函数作为props传递给子组件（尤其是使用React.memo优化的子组件），使用useCallback缓存函数引用，避免因函数引用变化导致子组件不必要的重渲染；二是函数作为useEffect/useMemo的依赖项时，使用useCallback缓存函数引用，确保依赖判断的准确性，避免useEffect/useMemo不必要的触发；三是在自定义Hook中返回函数，使用useCallback确保返回函数的引用稳定，提升使用该Hook的组件性能。
+注意：若计算逻辑简单、子组件无React.memo优化，或函数仅在组件内部使用，无需使用useMemo/useCallback，否则会增加代码复杂度，且缓存本身也有微小的性能开销。",2,web前端开发,React、useState、useEffect、useMemo、useCallback,技术知识
+说说你对 React Hook的闭包陷阱的理解，有哪些解决方案？,"React Hook的闭包陷阱是指函数组件在渲染时捕获当前的状态和变量，由于Hooks的状态保存在闭包中，当异步操作（如setTimeout、Promise回调）执行时，访问的仍是捕获时的旧状态/变量，而非最新状态，导致获取到的值不符合预期。例如，在useEffect中设置定时器，定时器回调访问的state是组件挂载时的初始值，而非更新后的值。
+核心原因：函数组件每次渲染都会创建新的闭包，异步操作的回调函数会捕获当前渲染的闭包中的变量和状态，当组件重新渲染后，新的状态存在于新的闭包中，而异步回调仍引用旧闭包，因此无法获取最新状态。
+解决方案：一是使用useRef保存最新状态，ref的current属性在组件生命周期中保持唯一引用，可随时获取最新值，例如：
+```javascript
+const [count, setCount] = useState(0);
+const countRef = useRef(count);
+useEffect(() => {
+countRef.current = count; // 同步最新状态到ref
+}, [count]);
+useEffect(() => {
+setTimeout(() => {
+console.log(countRef.current); // 获取最新值
+}, 1000);
+}, []);
+```
+二是使用函数式更新（useState的函数参数），当更新状态时依赖最新状态，使用函数式更新可获取最新状态，例如：
+```javascript
+setCount(prevCount => prevCount + 1); // prevCount是最新状态
+```
+三是在useEffect的依赖数组中包含相关状态，使异步操作在状态变化时重新创建，例如：
+```javascript
+useEffect(() => {
+const timer = setTimeout(() => {
+console.log(count); // 依赖count，每次count变化重新创建定时器
+}, 1000);
+return () => clearTimeout(timer);
+}, [count]);
+```
+四是使用useReducer管理复杂状态，reducer的参数中可获取最新的state，避免闭包捕获旧状态的问题。",3,web前端开发,React、useState、useEffect、useRef、闭包,技术知识
+React18新特性,"React18的核心升级是引入并发渲染（Concurrent Rendering），提供了可中断、可暂停的渲染能力，同时新增了一系列API和特性，提升应用的性能和用户体验：
+一是createRoot替代render：React18推荐使用createRoot（react-dom/client）创建根节点，替代原有的ReactDOM.render，启用并发渲染模式，支持自动批量更新、流式渲染等新特性；
+二是自动批量更新（Automatic Batching）：默认情况下，所有场景（包括原生事件、定时器、Promise回调）的setState都会被批量处理，减少DOM更新次数，提升性能，替代了React18前仅在合成事件/生命周期中批量更新的逻辑；
+三是并发特性（Concurrent Features）：包括useDeferredValue（延迟更新低优先级状态，优先处理高优先级任务）、useTransition（标记低优先级的状态更新，避免阻塞用户交互）、Suspense的增强（支持数据加载、流式渲染、服务端渲染的Suspense）；
+四是流式服务端渲染（Streaming SSR）：通过renderToPipeableStream/renderToReadableStream实现流式渲染，将HTML分块发送到客户端，提升首屏加载速度，配合Suspense可实现按需加载组件；
+五是严格模式增强（Strict Mode）：新增对重复挂载/卸载的检测，帮助开发者发现副作用问题，为未来的可复用组件做准备；
+六是其他优化：如useId（生成跨服务端和客户端的唯一ID，解决SSR中的ID不一致问题）、useSyncExternalStore（统一处理外部状态的订阅，如Redux、MobX）、改进的错误边界（支持捕获更多场景的错误）、对React Server Components的初步支持等。",2,web前端开发,React、Promise、useState、HTTPS,技术知识
+React 中，怎么实现父组件调用子组件中的方法？,"React中父组件调用子组件方法的核心是通过ref获取子组件的引用，然后调用其方法，分为类组件和函数组件两种场景：
+一是类组件场景：子组件是类组件时，父组件通过createRef（或useRef）创建ref，传递给子组件，父组件可通过ref.current访问子组件的实例，调用其方法，例如：
+```javascript
+// 父组件
+class Parent extends React.Component {
+childRef = React.createRef();
+handleCallChildMethod = () => {
+this.childRef.current.childMethod(); // 调用子组件方法
+};
+render() {
+return (
+<div>
+<Child ref={this.childRef} />
+<button onClick={this.handleCallChildMethod}>调用子组件方法</button>
+</div>
+);
+}
+}
+// 子组件
+class Child extends React.Component {
+childMethod = () => {
+console.log('子组件方法被调用');
+};
+render() {
+return <div>子组件</div>;
+}
+}
+```
+二是函数组件场景：函数组件无实例，需通过forwardRef和useImperativeHandle暴露方法，forwardRef用于转发ref到函数组件内部，useImperativeHandle用于自定义暴露给父组件的实例值，例如：
+```javascript
+// 子组件
+const Child = React.forwardRef((props, ref) => {
+const childMethod = () => {
+console.log('子组件方法被调用');
+};
+React.useImperativeHandle(ref, () => ({
+childMethod // 暴露给父组件的方法
+}));
+return <div>子组件</div>;
+});
+// 父组件
+const Parent = () => {
+const childRef = React.useRef(null);
+const handleCallChildMethod = () => {
+childRef.current.childMethod(); // 调用子组件方法
+};
+return (
+<div>
+<Child ref={childRef} />
+<button onClick={handleCallChildMethod}>调用子组件方法</button>
+</div>
+);
+};
+```
+注意：应尽量避免直接调用子组件方法，优先通过props传递状态和回调的方式实现组件通信，仅在无法通过props实现（如聚焦输入框、播放视频）时使用ref调用方法，避免组件耦合过高。",3,web前端开发,React、useRef、Hooks、class,场景题
+你常用的 React Hooks 有哪些？,"日常开发中常用的React Hooks覆盖了状态管理、副作用处理、性能优化、上下文、引用管理等场景，核心包括：
+一是useState：最基础的状态管理Hook，用于在函数组件中声明状态变量，返回状态值和更新状态的方法，适用于管理组件内部的简单状态（如输入框值、开关状态、列表数据）；
+二是useEffect：处理副作用的Hook，用于执行数据请求、事件监听、DOM操作、订阅/取消订阅等副作用逻辑，支持清理函数，依赖数组控制执行时机；
+三是useRef：创建可变的引用对象，current属性可保存任意值（如DOM元素、定时器ID、最新状态），引用值变化不会触发组件重渲染，适用于获取DOM元素、保存跨渲染周期的变量；
+四是useContext：消费React Context的Hook，简化跨组件数据传递，避免props drilling，适用于获取主题、用户信息等全局状态；
+五是useMemo：缓存计算结果的Hook，优化性能，避免不必要的重复计算，适用于复杂数据处理、传递稳定引用给子组件；
+六是useCallback：缓存函数引用的Hook，确保函数引用稳定，避免子组件不必要的重渲染，适用于传递函数props、作为useEffect依赖；
+七是useReducer：替代useState的复杂状态管理Hook，通过reducer函数处理状态更新逻辑，适用于状态逻辑复杂、多个状态关联更新的场景；
+八是useLayoutEffect：与useEffect类似，但执行时机在DOM更新后、浏览器绘制前，同步执行，适用于需要立即操作DOM的场景（如测量DOM尺寸）；
+九是useImperativeHandle：配合forwardRef自定义暴露给父组件的实例方法/属性，适用于函数组件向父组件暴露方法；
+十是自定义Hook：基于内置Hook封装的复用逻辑，如useRequest（异步请求）、useLocalStorage（本地存储）、useWindowSize（监听窗口大小）等，提升开发效率。",3,web前端开发,React、useState、useEffect、useRef、Hooks,技术知识
+说说你对 useReducer 的理解,"useReducer是React Hooks提供的状态管理Hook，是useState的替代方案，适用于管理复杂状态逻辑，其设计灵感来源于Redux的reducer模式，核心是通过纯函数（reducer）处理状态更新，使状态变化更可预测、可维护。
+useReducer接收两个核心参数：第一个是reducer函数，该函数接收当前state和action，返回新的state（必须是纯函数，不修改原state）；第二个是初始state，可选第三个参数（初始化函数，用于惰性初始化state），返回值是一个数组，包含当前state和dispatch方法（用于派发action，触发reducer执行）。
+核心特性：一是状态逻辑集中化，当组件有多个关联的状态（如表单的多个字段、购物车的增删改查），或状态更新逻辑复杂（包含多个条件判断），使用useReducer可将状态更新逻辑抽离到reducer函数中，使组件代码更简洁；二是可预测性，reducer是纯函数，相同的state和action始终返回相同的新state，便于调试和测试；三是支持惰性初始化，通过第三个参数可延迟计算初始state，避免组件首次渲染时的不必要计算；四是便于复用和扩展，reducer函数可单独抽离，在多个组件中复用，或通过组合reducer扩展状态逻辑；五是dispatch方法的引用稳定，即使reducer函数重新创建，dispatch的引用也不会变化，可安全地作为useEffect的依赖。
+应用场景：组件状态逻辑复杂（如多个状态关联更新）、状态更新需要根据不同条件判断、需要将状态更新逻辑抽离复用、团队习惯Redux的reducer模式等场景，例如表单管理、购物车状态、复杂的UI交互状态（如弹窗的显示/隐藏、步骤条的切换）等。",2,web前端开发,React、useState、useReducer、Hooks,技术知识
+useMemo 和 useCallback 有什么区别？,"useMemo和useCallback都是React Hooks提供的性能优化工具，核心都是基于依赖数组缓存值，但缓存的目标和返回值不同，具体区别如下：
+一是缓存目标不同：useMemo缓存的是“函数的执行结果”（任意类型的值，如数字、对象、数组、组件），接收一个计算函数和依赖数组，仅当依赖变化时重新执行计算函数，返回新的结果；useCallback缓存的是“函数本身的引用”，接收一个函数和依赖数组，仅当依赖变化时返回新的函数引用，否则返回缓存的函数引用。
+二是返回值不同：useMemo的返回值是计算函数的执行结果，即“值”；useCallback的返回值是传入的函数本身，即“函数引用”。
+三是使用场景不同：useMemo适用于优化昂贵的计算逻辑，避免每次渲染重复计算，或确保传递给子组件的引用类型值（如对象、数组）的稳定性；useCallback适用于确保函数引用的稳定性，避免因函数引用变化导致子组件（React.memo优化）不必要的重渲染，或作为useEffect/useMemo的依赖项，确保依赖判断准确。
+四是语法差异：useMemo(() => computeValue(a, b), [a, b])，执行computeValue并缓存其结果；useCallback(() => handleClick(a), [a])，缓存handleClick函数的引用，不执行函数。
+核心共同点：二者都依赖浅比较的依赖数组，若依赖是引用类型，需确保引用稳定；都应在确有性能问题时使用，避免过度优化；缓存的有效期与组件生命周期一致，组件卸载后缓存失效。",3,web前端开发,React、useMemo、useCallback、const,技术知识
+怎么在代码中判断一个 React 组件是 class component 还是 function component？,"在React中判断组件类型（类组件/函数组件）的核心是利用类组件和函数组件的本质差异（类组件是ES6类，继承自React.Component；函数组件是普通函数/箭头函数），具体方法如下：
+一是通过原型链判断：类组件继承自React.Component，其原型（prototype）上有isReactComponent属性（React内部添加的标记），函数组件无此属性，例如：
+```javascript
+import React from 'react';
+function isClassComponent(Component) {
+return (
+typeof Component === 'function' &&
+!!Component.prototype?.isReactComponent
+);
+}
+function isFunctionComponent(Component) {
+return (
+typeof Component === 'function' &&
+!Component.prototype?.isReactComponent
+);
+}
+```
+二是通过React.isValidElement辅助（适用于组件实例）：若要判断的是组件的实例（而非组件本身），可先通过React.isValidElement判断是否为React元素，再通过元素的type属性判断组件类型，例如：
+```javascript
+function checkComponentType(element) {
+if (!React.isValidElement(element)) return 'not a React element';
+const Component = element.type;
+if (isClassComponent(Component)) return 'class component';
+if (isFunctionComponent(Component)) return 'function component';
+return 'native element (e.g. div, span)';
+}
+```
+三是注意边界情况：
+- 箭头函数定义的函数组件，prototype为undefined，需兼容判断；
+- 高阶组件（HOC）返回的组件，需穿透HOC获取原始组件类型；
+- React.memo包装的函数组件，其type是memo包装后的对象，需通过type.type获取原始组件；
+- 函数组件返回JSX的同时，若手动添加prototype属性，会导致误判，需结合实际场景调整。
+核心逻辑：类组件是继承自React.Component的ES6类，原型上有isReactComponent标记；函数组件是普通函数，无此标记，基于这一差异可准确判断。",2,web前端开发,React、class、const,技术知识
+useRef / ref / forwardsRef 的区别是什么？,"useRef、ref、forwardRef是React中处理引用的不同概念，分别对应Hook、属性、函数，核心作用都是获取DOM元素或组件实例，但适用场景和功能不同：
+一是ref：是React的特殊属性，用于标记DOM元素或类组件实例，传递给组件或DOM元素后，可通过ref获取其引用。ref的取值可以是字符串（已废弃）、回调函数、createRef/useRef创建的Ref对象。适用于类组件和函数组件（需配合forwardRef），核心是“标记需要引用的目标”，是获取引用的入口属性。
+二是useRef：是React Hooks提供的Hook，仅适用于函数组件，用于创建可变的Ref对象，该对象的current属性可保存任意值（DOM元素、组件实例、定时器ID、状态值等）。useRef创建的Ref对象在组件整个生命周期中保持唯一，其current值变化不会触发组件重渲染，适用于函数组件中保存跨渲染周期的变量、获取DOM元素/函数组件暴露的方法（配合forwardRef）。
+三是forwardRef：是React的高阶函数，用于将父组件传递的ref转发到函数组件内部的DOM元素或子组件，解决函数组件无实例、无法直接接收ref的问题。函数组件本身不能接收ref属性，通过forwardRef包裹函数组件，可接收第二个参数（ref），并将其绑定到内部的DOM元素或类组件上，使父组件能获取到函数组件内部的DOM引用。
+总结关系：ref是引用属性，useRef是函数组件中创建Ref对象的Hook，forwardRef是函数组件转发ref的工具；父组件通过useRef创建Ref对象，传递给子组件的ref属性，若子组件是函数组件，需通过forwardRef接收ref并转发到内部DOM，最终通过Ref对象的current获取引用。",2,web前端开发,React、useRef、DOM、Ref,技术知识
+"useEffect 的第二个参数, 传空数组和传依赖数组有什么区别？","useEffect的第二个参数是依赖数组，用于控制useEffect回调函数的执行时机，传空数组和传依赖数组的核心区别在于执行时机和触发条件：
+一是传空数组（[]）：useEffect的回调函数仅在组件首次挂载时执行一次，组件更新（如state、props变化）时不会重新执行，清理函数仅在组件卸载时执行。这模拟了类组件中componentDidMount（挂载时执行）和componentWillUnmount（卸载时执行清理）的组合效果，适用于只需执行一次的副作用（如初始化数据请求、添加全局事件监听、订阅数据）。
+二是传依赖数组（如[a, b]）：useEffect的回调函数会在组件首次挂载时执行一次，且仅当依赖数组中的任意值（a或b）发生变化（浅比较）时重新执行，清理函数会在依赖变化前执行（组件更新时），组件卸载时也会执行。适用于副作用逻辑依赖特定变量的场景（如根据props中的ID请求数据、监听特定状态的变化），确保副作用仅在依赖变化时触发，避免不必要的执行。
+补充：若不传递第二个参数，useEffect的回调函数会在每次组件渲染后执行，清理函数在每次渲染前执行，性能开销较大，通常不推荐；依赖数组的比较是浅比较，若依赖是引用类型（对象、数组），需确保引用的稳定性（如使用useMemo/useCallback），否则会导致不必要的触发。",3,web前端开发,React、useEffect、闭包,技术知识
+如果在 useEffect 的第一个参数中 return 了一个函数，那么第二个参数分别传空数组和传依赖数组，该函数分别是在什么时候执行？,"useEffect第一个参数返回的函数称为清理函数（Cleanup Function），用于清理副作用（如取消订阅、移除事件监听、清除定时器），其执行时机取决于第二个参数（依赖数组）的传递方式：
+一是第二个参数传空数组（[]）：清理函数仅在组件卸载时执行一次。因为传空数组时，useEffect的回调函数仅在组件首次挂载时执行，没有依赖项变化，因此清理函数不会在组件更新时执行，仅在组件从DOM中移除（卸载）时执行，对应类组件的componentWillUnmount生命周期。
+二是第二个参数传依赖数组（如[a, b]）：清理函数有两个执行时机，首先是在依赖数组中的值发生变化（浅比较）时，在新的副作用执行前执行（即组件更新时，先清理旧的副作用，再执行新的副作用）；其次是在组件卸载时执行一次。例如，当a的值变化时，先执行清理函数（清理上次的副作用），再执行useEffect的回调函数（执行新的副作用）；组件卸载时，执行最后一次清理函数。
+补充：若不传递第二个参数，清理函数会在每次组件渲染前执行（包括首次渲染后的每次更新），组件卸载时也会执行，这会导致清理函数频繁执行，需谨慎使用。清理函数的核心作用是避免内存泄漏，确保副作用在不需要时被清理。",3,web前端开发,React、内存泄漏、useEffect,技术知识
+讲讲 React.memo 和 JS 的 memorize 函数的区别？,"React.memo和JavaScript的memoize函数（记忆函数）都是基于缓存提升性能，但适用场景、缓存目标、实现逻辑完全不同：
+一是适用场景不同：React.memo是React提供的高阶组件（HOC），仅适用于优化函数组件的渲染性能，避免组件不必要的重渲染；JS的memoize函数是通用的函数缓存工具，适用于任意函数（如计算函数、请求函数），缓存函数的执行结果，避免重复计算。
+二是缓存目标不同：React.memo缓存的是组件的渲染结果（虚拟DOM），它浅比较组件的props，若props未变化，复用上次的渲染结果，不重新执行组件函数；JS的memoize函数缓存的是普通函数的执行结果，根据函数的参数生成缓存键，相同参数调用时返回缓存的结果，不重新执行函数。
+三是实现逻辑不同：React.memo的核心是浅比较props，接收两个参数（要包装的组件、可选的自定义比较函数），自定义比较函数返回true时复用渲染结果，返回false时重新渲染；JS的memoize函数的核心是缓存映射（如Object/Map），将函数参数序列化为键，存储参数与结果的映射，调用时先查缓存，无缓存再执行函数并存储结果，参数比较可自定义（浅比较/深比较）。
+四是缓存有效期不同：React.memo的缓存与组件生命周期绑定，组件卸载后缓存失效；JS的memoize函数的缓存默认是持久化的（除非手动清理），存在于函数的闭包或全局对象中，不受组件生命周期影响。
+五是使用方式不同：React.memo通过包裹函数组件使用（如const MemoComponent = React.memo(MyComponent)）；JS的memoize函数通过包裹普通函数使用（如const memoizedFn = memoize(computeFn)）。",3,web前端开发,React、高阶组件、递归、缓存,技术知识
+怎么判断一个对象是否是 React 元素？,"React元素是由React.createElement（或JSX编译后的结果）创建的普通JavaScript对象，用于描述DOM结构或组件，判断一个对象是否为React元素可通过React提供的内置方法或检查对象特征：
+一是使用React.isValidElement方法（推荐）：React提供了React.isValidElement()方法，专门用于判断一个值是否为React元素，该方法是官方推荐的、最可靠的方式，例如：
+```javascript
+import React from 'react';
+const element = <div>Hello</div>;
+const plainObj = { type: 'div', props: { children: 'Hello' } };
+console.log(React.isValidElement(element)); // true
+console.log(React.isValidElement(plainObj)); // false
+```
+React.isValidElement会检查对象是否是React内部创建的元素对象，包含特定的内部标记（如$$typeof），避免误判普通对象。
+二是手动检查特征（不推荐，仅作了解）：React元素对象包含$$typeof（值为Symbol.for('react.element')）、type、props等核心属性，可通过这些特征判断，例如：
+```javascript
+function isReactElement(obj) {
+return (
+typeof obj === 'object' &&
+obj !== null &&
+obj.$$typeof === Symbol.for('react.element') &&
+'type' in obj &&
+'props' in obj
+);
+}
+```
+但手动检查存在风险，因为React的内部实现可能变化（如$$typeof的符号值），且无法区分合法的React元素和伪造的对象，因此优先使用React.isValidElement。
+注意：React元素不同于组件（组件是函数/类，元素是组件的实例化对象），也不同于真实DOM元素（DOM元素是浏览器提供的对象），需区分这三个概念。",2,web前端开发,React、JSX、const、import,技术知识
+说说对 React 中Element、Component、Node、Instance 四个概念的理解,"React中的Element、Component、Node、Instance是核心概念，分别对应不同的抽象层级，具体理解如下：
+一是Element（React元素）：是描述UI的不可变普通JavaScript对象，由React.createElement或JSX编译生成，包含type（元素类型，如div、span、自定义组件）、props（属性）、children（子元素）、$$typeof（React内部标记）等字段。React元素是虚拟DOM的最小单元，不依赖于浏览器环境，仅存在于内存中，是对真实DOM的抽象描述，本身无状态、无方法，不可修改，修改需创建新的Element。
+二是Component（组件）：是可复用的UI逻辑单元，分为函数组件（纯函数，接收props返回Element）和类组件（继承React.Component，通过render方法返回Element）。组件是生成Element的“工厂”，接收外部传入的props，封装了状态和逻辑，可组合、复用，是React构建UI的核心单元。组件本身是函数/类，执行后返回Element，而非直接渲染为DOM。
+三是Node（React节点）：是更宽泛的概念，指可作为组件children的任意值，包括React元素、字符串、数字、布尔值、null、undefined、数组（包含上述类型）等。React会将Node转换为对应的Element，例如字符串会被转换为文本Element，布尔值/null/undefined会被忽略，数组会被扁平化处理为多个Element。Node是React对“可渲染内容”的通用描述，涵盖了所有可出现在JSX中的内容。
+四是Instance（实例）：是组件在渲染时创建的实例对象，仅类组件有实例（函数组件无实例），类组件的this指向实例，实例包含组件的state、props、生命周期方法等，是组件状态和逻辑的载体。React通过实例管理类组件的生命周期和状态，函数组件因无实例，状态由Hooks（如useState）在闭包中管理。真实DOM节点也可称为DOM Instance，是Element渲染后的具体实现。
+总结关系：Component（组件）执行/渲染后生成Element（元素），Element是Node（节点）的子集，类组件渲染时创建Instance（实例），Element最终被React渲染为DOM Instance（真实DOM实例）。",2,web前端开发,React、class、DOM,技术知识
+React 和 Vue 在技术层面有哪些区别？,"React和Vue作为主流前端框架，在技术层面的核心区别体现在设计理念、核心机制、语法、性能优化等方面：
+一是设计理念：React强调“函数式编程”和“单向数据流”，组件设计偏向纯函数，状态更新通过setState/useState触发重新渲染，推崇“一切皆组件”，通过JSX将逻辑与UI融合；Vue强调“渐进式框架”和“响应式编程”，核心是数据驱动，通过响应式系统自动追踪依赖、更新视图，语法更贴近HTML，模板与逻辑分离，学习曲线更平缓，可按需引入功能。
+二是核心机制：React的更新机制基于虚拟DOM的Diff算法，默认递归遍历组件树，通过Fiber架构实现可中断的异步渲染，依赖手动管理状态更新（如useState/useReducer），更新粒度较粗（需通过React.memo/shouldComponentUpdate优化）；Vue的更新机制基于响应式系统（Vue2 Object.defineProperty，Vue3 Proxy），精准追踪组件依赖，仅更新依赖变化的组件，无需递归遍历，更新粒度更细，且内置异步批量更新，无需手动优化（Vue3新增PatchFlags进一步精准更新DOM）。
+三是语法与模板：React使用JSX，将HTML嵌入JavaScript，支持在JSX中编写完整的JavaScript逻辑，灵活性高，学习成本稍高；Vue默认使用HTML模板（也支持JSX），模板语法接近原生HTML，指令（如v-if、v-for、v-bind）简化了DOM操作，逻辑通过options（如methods、computed）或Composition API（Vue3）与模板分离，更符合前端开发者的习惯。
+四是状态管理：React本身无内置状态管理，需结合Redux/MobX/Zustand等第三方库，状态管理逻辑较灵活但需手动配置；Vue内置Vuex/Pinia（Vue3），与框架深度集成，API更简洁，响应式系统使状态更新自动触发视图更新，无需手动订阅。
+五是生命周期/钩子：React类组件有明确的生命周期钩子，函数组件通过Hooks（useEffect/useLayoutEffect）模拟生命周期；Vue2有options式生命周期钩子，Vue3的Composition API通过onMounted/onUpdated等钩子替代，更灵活且可组合。
+六是性能优化：React需手动使用useMemo/useCallback/React.memo优化重渲染，依赖浅比较；Vue的响应式系统自动优化，Vue3通过编译优化（静态提升、PatchFlags、缓存事件处理函数）进一步提升性能，无需手动优化简单场景。
+七是跨平台：React通过React Native实现跨平台（iOS/Android），使用JSX和React语法，需学习原生模块交互；Vue通过Vue Native/uni-app/Taro等实现跨平台，更贴近Web开发体验，生态相对轻量化。",5,web前端开发,React、数据绑定、Redux、Vuex,技术知识
+实现 useUpdate 方法，调用时强制组件重新渲染,"useUpdate的核心是创建一个无实际意义的状态，调用更新该状态的方法，触发组件重新渲染，因为React中状态变化会强制组件重渲染，具体实现如下：
+```javascript
+import { useState, useCallback } from 'react';
+function useUpdate() {
+// 创建一个布尔值状态，仅用于触发重渲染
+const [, setFlag] = useState(false);
+// 使用useCallback缓存函数引用，确保返回的函数引用稳定
+const update = useCallback(() => {
+// 切换布尔值状态，触发重渲染
+setFlag(flag => !flag);
+}, []);
+return update;
+}
+```
+使用方式：
+```javascript
+const MyComponent = () => {
+const forceUpdate = useUpdate();
+return (
+<div>
+<button onClick={forceUpdate}>强制重渲染</button>
+</div>
+);
+};
+```
+核心原理：useState创建的状态无论值如何变化，只要调用setter方法（且值发生变化），就会触发组件重渲染。这里使用无实际业务意义的布尔值状态，通过切换其值（flag => !flag），确保每次调用update都会触发状态变化，从而强制组件重新渲染。useCallback缓存update函数的引用，避免每次组件渲染返回新的函数引用，提升使用体验（如作为props传递时）。
+扩展：若需支持类组件，可通过forceUpdate方法（类组件实例的内置方法），但函数组件无此方法，因此通过useState模拟。",2,web前端开发,React、useReducer、const、import,技术知识
+taro 的实现原理是怎么样的？,"Taro是一套遵循React语法规范的多端开发框架，核心原理是“一次编写，多端运行”，通过抽象统一的语法层和编译转换层，将React/React-like代码编译为各端原生代码（微信小程序、支付宝小程序、H5、React Native等）。
+核心实现分为三个层面：一是语法抽象层，Taro基于React规范封装了统一的组件和API（如View、Text、Button替代各端原生组件，Taro.request替代wx.request/fetch），开发者编写的代码基于这套抽象层，与具体端无关；二是编译转换层，通过webpack、babel等构建工具，将开发者编写的React代码（JSX/TSX）编译为各端的原生代码：对于小程序，将JSX编译为小程序的WXML/WXSS，将React组件转换为小程序的自定义组件，将路由配置转换为小程序的app.json/pages；对于H5，将Taro组件转换为HTML元素，适配浏览器API；对于React Native，将Taro组件转换为RN组件，适配原生模块；三是运行时适配层，Taro提供了各端的运行时库，模拟React的核心特性（如虚拟DOM、组件生命周期、状态管理），适配各端的原生API差异，例如在小程序中模拟React的合成事件、setState更新机制，在H5中模拟小程序的路由和存储API。
+关键技术点：一是虚拟DOM适配，Taro实现了轻量的虚拟DOM，将虚拟DOM转换为各端的原生节点（小程序的WXML节点、H5的DOM节点）；二是生命周期适配，将React的生命周期映射到各端的生命周期（如小程序的attached/ detached对应React的componentDidMount/componentWillUnmount）；三是API适配，封装统一的API（如Taro.navigateTo），运行时根据环境调用对应端的原生API（小程序的wx.navigateTo、H5的history.pushState）；四是样式适配，将CSS编译为各端的样式格式（小程序的WXSS、H5的CSS），处理样式隔离、单位转换（如rpx适配）。",5,web前端开发,React、资源压缩、Webpack、Babel,技术知识
+taro 2.x 和 taro 3 最大区别是什么？,"Taro 2.x和Taro 3的核心区别在于架构设计和编译运行方式，从根本上改变了多端适配的逻辑，具体如下：
+一是核心架构：Taro 2.x采用“编译时+运行时”的混合架构，但本质是“模板编译”，将React代码编译为各端的模板代码（如小程序的WXML/WXSS），虚拟DOM在编译时被转换为静态模板，运行时仅处理数据绑定，缺乏动态渲染能力，限制了React特性的使用（如动态组件、JSX动态渲染）；Taro 3重构为“运行时核心+编译适配”的架构，核心是基于React的虚拟DOM运行时，小程序端不再编译为静态模板，而是通过运行时将虚拟DOM转换为小程序的原生节点，支持完整的React特性，动态渲染能力大幅提升。
+二是React特性支持：Taro 2.x对React特性支持有限，无法使用Context、Hooks（早期版本）、动态JSX、高阶组件等高级特性，限制了开发灵活性；Taro 3全面支持React 16+的特性，包括Hooks、Context、Suspense、懒加载等，可无缝使用React生态的库（如Redux、MobX），开发体验与Web端React一致。
+三是编译产物：Taro 2.x的小程序编译产物是静态的WXML/WXSS/JS，每个组件对应一个小程序自定义组件，逻辑与模板分离，动态修改DOM的能力弱；Taro 3的小程序编译产物是运行时核心+业务逻辑，运行时负责虚拟DOM的渲染和更新，模板仅包含一个根节点，所有DOM操作由运行时动态处理，更接近Web端的React渲染逻辑。
+四是性能与灵活性：Taro 2.x性能较好（静态模板），但灵活性差，无法满足复杂动态UI的需求；Taro 3灵活性大幅提升，支持复杂动态渲染，但因运行时解析虚拟DOM，小程序端性能略有损耗（通过编译优化弥补）。
+五是开发体验：Taro 2.x需适配小程序的限制（如模板语法、数据绑定），开发体验与Web端React差异大；Taro 3开发体验与Web端React一致，无需关注各端差异，运行时自动适配，降低了学习和开发成本。",5,web前端开发,React、Webpack、class、DOM,技术知识
+单页应用如何提高加载速度？,单页应用提升加载速度可以从资源体积、网络请求、渲染策略、缓存机制等多方面优化，核心思路是减少请求、减小体积、延迟加载非关键内容。可以通过代码分割实现路由懒加载，只加载当前页面需要的代码；对JavaScript、CSS、图片、字体等资源进行压缩合并，移除无用代码；使用CDN分发静态资源，开启Gzip或Brotli压缩；合理使用浏览器缓存与本地存储，缓存接口数据与静态资源；采用骨架屏、资源预加载、预连接、DNS预解析等手段提升感知速度；优化关键渲染路径，内联关键CSS，延迟加载非必要脚本；服务端渲染或静态生成可以大幅提升首屏加载速度，同时优化图片格式与大小，使用WebP、懒加载、响应式图片等方式进一步降低资源开销。,5,web前端开发,React、CDN、懒加载、预加载,技术知识
+React 中的 ref 有什么用？,ref 用于获取真实 DOM 元素或类组件实例的引用，让开发者可以直接操作 DOM 或调用组件实例方法。在函数组件中可以通过 useRef 创建 ref 对象，绑定到元素或组件上，获取到 DOM 节点后可以执行聚焦、获取宽高、操作原生属性等操作；也可以用 ref 存储跨渲染周期不变的值，不会因为组件更新而重置，也不会触发重新渲染。ref 是 React 中为数不多可以脱离虚拟 DOM、直接操作底层真实节点的方式，常用于处理动画、表单焦点、第三方库集成等无法通过声明式完成的场景。,2,web前端开发,React、useRef、DOM、Ref,技术知识
+react-router 里的 \<Link> 标签和 \<a> 标签有什么区别？,Link 是 react-router 提供的组件，最终会渲染成 a 标签，但它阻止了浏览器的默认跳转行为，不会刷新整个页面，而是通过前端路由更新视图，属于单页应用内的跳转；而原生 a 标签会触发浏览器的完整页面刷新，重新请求 HTML、CSS、JS 等资源，破坏单页应用体验。Link 内部使用 history API 实现路由切换，只会更新 URL 和对应页面组件，保留应用状态，而 a 标签会重置整个页面上下文，丢失应用内状态，因此在单页应用中路由跳转必须使用 Link，避免使用原生 a 标签。,2,web前端开发,React,技术知识
+说说你对React Router的理解？常用的Router组件有哪些？,React Router 是 React 生态的官方路由库，用于实现单页应用的前端路由管理，让页面可以根据 URL 变化切换不同组件，而不刷新浏览器。它将 URL 与组件做映射，提供声明式路由、编程式导航、路由守卫、嵌套路由、动态路由等能力，是 React 单页应用的核心基础设施。常用组件包括：用于包裹应用、提供路由上下文的 BrowserRouter 和 HashRouter；用于匹配路径、渲染对应组件的 Route；用于声明式跳转的 Link 和高亮导航的 NavLink；用于独占路由、只匹配一个路由的 Switch；用于重定向的 Redirect；以及用于嵌套路由和统一管理的 Routes 与 Outlet（React Router v6）。,2,web前端开发,React、React Router、DOM、import,技术知识
+说说React Router有几种模式，以及实现原理？,React Router 主要有两种路由模式：history 模式和 hash 模式。history 模式使用 BrowserRouter，基于浏览器的 history API（pushState、replaceState、popstate）实现，URL 路径干净不带 #，更接近传统网址，但需要服务端配置支持，否则刷新会出现 404；hash 模式使用 HashRouter，基于 URL 中的 hash 值（# 后面部分）变化实现，hash 变化不会向服务端发送请求，兼容性更好，无需服务端配置，但 URL 中会带有 #，不够美观。两者原理都是监听 URL 变化，不触发页面刷新，内部匹配路由规则并渲染对应组件，实现单页应用的无刷新切换。,5,web前端开发,React、React Router、Context、HTTP,场景题
+使用 useState时，为什么连续调用 setTest会出现值的丢失？,连续调用 setTest 出现值丢失，是因为 useState 的更新是异步批量处理的，每次调用 setTest 并不会立即更新 state，而是把更新任务放入队列，等事件函数执行完毕后再统一更新。如果多次直接使用对象形式更新，比如 setTest(test + 1)，每次获取的 test 都是当前闭包中的旧值，多次更新会互相覆盖，最终只执行最后一次。想要正确累加，必须使用函数式更新 setTest(prev => prev + 1)，函数式更新可以拿到最新的上一次状态，确保每次更新都基于最新值，不会出现覆盖丢失。当前文件内容过长，豆包只阅读了前 34%。,2,web前端开发,React、useState、const,技术知识
+实现一个 useTimeout Hook,实现 useTimeout 可以封装定时器逻辑，自动处理清除和依赖更新，避免闭包陷阱与重复创建，核心是在 useEffect 中管理定时器，并在依赖变化或组件卸载时清除，保证逻辑稳定可靠。,3,web前端开发,React、useState、useEffect、useRef,场景题
+react 中怎么捕获异常？,React 中捕获异常主要使用错误边界组件，错误边界是类组件，通过实现 static getDerivedStateFromError 与 componentDidCatch 两个生命周期，捕获子组件渲染、生命周期中的错误，展示降级 UI 并上报日志，无法捕获事件处理、异步代码、自身抛出的错误，这类场景需要配合 try/catch、Promise catch 与全局 onerror 事件兜底捕获。,2,web前端开发,React、requestAnimationFrame、async/await、class,技术知识
+说说 https 的握手过程,HTTPS 握手基于 TLS 协议，客户端先发送随机数、支持的加密套件列表，服务端返回证书、第二个随机数与选定套件，客户端验证证书后生成预主密钥，用证书公钥加密发给服务端，双方用预主密钥和两个随机数算出会话密钥，后续通信使用对称加密传输数据，完成加密通道建立。,3,web前端开发,React、三次握手、HTTPS,技术知识
+HTTP2中，多路复用的原理是什么？,HTTP2 多路复用在同一个 TCP 连接上同时传输多个请求与响应数据流，每个流拆分为帧独立传输，不依赖顺序排队，解决了 HTTP1.1 队头阻塞问题，同一域名只需一个连接，减少握手开销，提升传输效率与并发能力。,3,web前端开发,React、HTTP,技术知识
+说说你对“三次握手”、“四次挥手”的理解,三次握手是 TCP 建立连接的过程，客户端发送同步包，服务端回复确认同步包，客户端再发送确认包，确保双方收发能力正常；四次挥手是断开连接的过程，一方发结束包，对方确认，对方再发结束包，本方最后确认，保证数据传输完毕再关闭连接。,4,web前端开发,React、三次握手、四次挥手、TCP,技术知识
+如何确保你的构造函数只能被new调用，而不能被普通调用？,在构造函数中判断是否为 new 调用，通过检查 this 是否为构造函数实例，或使用 new.target 判断，非 new 调用时直接抛出错误，强制只能通过 new 关键字实例化，避免普通调用导致异常。,3,web前端开发,React、原型链、this,技术知识
+为什么推荐将静态资源放到cdn上？,CDN 拥有分布式节点，可就近访问，降低延迟，提升加载速度，同时分担源站带宽压力，缓解流量峰值，具备缓存加速、故障自动切换、抗 DDoS 能力，还能优化浏览器并发请求限制，适合静态资源分发。,3,web前端开发,React、接口、缓存,技术知识
+Vue2.0为什么不能检查数组的变化，该怎么解决？,Vue2 基于 Object.defineProperty 实现响应式，无法监听数组下标修改与 length 变更，只能拦截数组方法，解决方式是使用 push、pop、splice 等变异方法，或通过 Vue.set、this.$set 修改指定下标，也可直接替换新数组触发更新。,2,web前端开发,React、Object.defineProperty、Proxy、HTTPS,技术知识
+说说Vue 页面渲染流程,Vue 先解析模板生成 AST 抽象语法树，再转换为渲染函数，执行渲染函数生成虚拟 DOM，通过 Diff 算法对比新旧虚拟 DOM，最小化更新真实 DOM，完成渲染与视图更新。,4,web前端开发,React、响应式原理、watch、响应式,技术知识
+请简述 == 的机制,== 是宽松相等比较，会先进行类型隐式转换，再比较值，规则为 null 与 undefined 相等，对象与原始值比较时对象转为原始值，数字与字符串比较转为数字，布尔值先转为数字再比较，最终判断值是否相等。,2,web前端开发,React、继承,技术知识
+怎么做移动端的样式适配？,移动端适配常用 rem、vw/vh、flex 布局与媒体查询，以设计稿为基准设置根字体大小，用 rem 做单位，或直接使用 vw 按视口比例适配，配合 postcss 插件自动转换单位，实现多设备屏幕自适应。,3,web前端开发,React、媒体查询、Flexbox、响应式,技术知识
+说说sourcemap的原理？,Sourcemap 记录压缩混淆后代码与源码的映射关系，包含文件路径、位置对应、变量名映射，浏览器通过它将报错位置还原为源码位置，方便调试压缩后的代码。,2,web前端开发,React、Source Map、HTTP、HTTPS,技术知识
+vue中computed和watch区别？,computed 是计算属性，依赖缓存，只有依赖变化才重新计算，适合数据派生与模板使用；watch 是监听回调，监听数据变化执行副作用，支持异步操作，适合数据变化后处理逻辑或发送请求。,2,web前端开发,React、双向绑定、computed、watch,技术知识
+什么是DNS劫持？,DNS 劫持是篡改域名解析结果，将正常域名指向恶意或错误 IP，导致用户访问虚假页面、广告或窃取信息，破坏正常解析流程，危害访问安全。,2,web前端开发,React、TCP、HTTP、DNS,技术知识
+爬楼梯,爬楼梯问题是经典动态规划，每次可爬 1 或 2 阶，第 n 阶方法数等于第 n-1 阶加第 n-2 阶方法数，递推公式为 dp[n]=dp[n-1]+dp[n-2]，初始 dp[1]=1、dp[2]=2，可迭代或递归求解。,5,web前端开发,React、动态规划、时间复杂度、空间复杂度,技术知识
+怎么实现图片懒加载？,图片懒加载先将真实地址存在 data-src，src 用占位图，监听 scroll、resize 事件，判断图片进入视口后将 data-src 赋值给 src，也可使用 IntersectionObserver  API 实现更高效监听。,4,web前端开发,React、HTTP、懒加载、DOM,场景题
+HTTP 报文结构是怎样的？,HTTP 报文分为请求报文与响应报文，都包含起始行、请求/响应头、空行、消息体，请求行含方法、路径、版本，响应行含版本、状态码、描述，头部为键值对，消息体存放传输数据。,2,web前端开发,React、TCP、HTTP,技术知识
+如果使用Vue3.0实现一个 Modal，你会怎么进行设计？,Vue3 实现 Modal 使用 Teleport 挂载到 body 避免层级问题，用 defineProps 接收显示状态、标题、内容，defineEmits 派发关闭事件，组合式 API 管理状态与逻辑，支持插槽自定义内容，配合过渡动画提升体验。,2,web前端开发,React、class、JSX、import,场景题
+js中数组是如何在内存中存储的？,JS 数组并非连续内存，是哈希表结构，可存储不同类型元素，索引为字符串属性，稀疏数组会浪费空间，V8 引擎对稠密数组优化为连续内存存储，提升访问效率。,4,web前端开发,React、垃圾回收、Symbol、链表,技术知识
+setTimeout 为什么不能保证能够及时执行？,setTimeout 是宏任务，需等待主线程同步代码执行完毕，再从任务队列按顺序执行，若主线程阻塞、任务过多或定时器嵌套过深，会导致回调延迟执行，无法保证准时触发。,3,web前端开发,React、Event Loop、线程,技术知识
+说说对 TypeScript 中命名空间与模块的理解？区别？,命名空间用于组织内部代码，避免全局污染，使用 namespace 定义，通过 export 暴露成员；模块是文件级别的独立作用域，基于 import/export，支持依赖管理与按需加载，适用于项目代码拆分。,3,web前端开发,React、接口、namespace、class、TypeScript,技术知识
+说说你对 typescript 的理解？与 javascript 的区别？,"TypeScript 是 JavaScript 的超集，增加静态类型、接口、泛型、枚举等特性，编译为 JS 运行，支持类型检查与智能提示，提升代码可维护性与健壮性，区别在于 JS 是动态类型，TS 是静态类型，编译期检查错误。
+要不要我把**全部 React + JS + Vue + TS 题目**按你要的格式整理成**可直接导入的题库 TXT**？当前文件内容过长，豆包只阅读了前 20%。",3,web前端开发,React、类型推断、泛型、接口、TypeScript,技术知识
+,,,,,

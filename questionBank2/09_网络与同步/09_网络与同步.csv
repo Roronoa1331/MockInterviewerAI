@@ -1,0 +1,46 @@
+﻿题目,答案要点,难度,相关岗位,标签,题目类型
+请简述 OSI 七层模型，并说明每一层的大致职责。,物理层传比特；数据链路层成帧与可靠点到点传输；网络层寻址与路由；传输层端到端可靠/流量控制（TCP/UDP）；会话层管理会话；表示层编码加密；应用层面向用户的协议与服务。,2,Unity网络/Gameplay客户端,综合,技术知识
+TCP 为什么要做拥塞控制？它通常包含哪些机制？,路由器排队溢出会导致丢包与延迟，需主动降速；典型含慢启动、拥塞避免、快速重传与快速恢复；与流量控制（接收窗口）不同，拥塞控制是全局网络友好行为。,2,Unity网络/Gameplay客户端,网络,行为题
+什么是序列化与反序列化？在网络通信中起什么作用？,序列化把内存对象转为可传输的字节流；反序列化还原对象；用于跨进程、跨语言通信与持久化；需约定编码格式与版本。,1,Unity网络/Gameplay客户端,综合,技术知识
+JSON、XML 与 Protobuf 各适合什么场景？游戏网络为何常用 Protobuf？,JSON 可读好、生态广；XML 冗长偏企业接口；Protobuf 二进制紧凑、解析快、字段号支持演进；弱网与高频包更适合 Protobuf/MessagePack 等二进制方案。,3,Unity网络/Gameplay客户端,综合,技术知识
+什么是网络抖动？对实时游戏有什么影响？如何缓解？,抖动是端到端时延的变化量，RTT 不稳定会导致预测困难、卡顿感；缓解：抖动缓冲、插值与回滚、冗余包/前向纠错、优先 UDP+应用层可靠（如 KCP）或调 TCP 参数。,2,Unity网络/Gameplay客户端,网络,技术知识
+HTTP 与 HTTPS 的主要区别是什么？,HTTPS 在 HTTP 下叠 TLS，默认 443 端口，提供加密、完整性与证书身份验证；HTTP 明文 80；敏感数据与防中间人必须用 HTTPS。,2,Unity网络/Gameplay客户端,综合,行为题
+在设计网络协议或选型序列化方案时，你会先厘清哪些「核心」问题？,实时性、可靠性、带宽、CPU、跨语言、调试与抓包需求、版本演进与安全。,2,Unity网络/Gameplay客户端,综合,技术知识
+Protobuf、FlatBuffers 等方案分别适用于哪些典型场景？,高吞吐战斗同步、弱网小包多用 Protobuf；需零拷贝或嵌入式可读缓冲可看 FlatBuffers；配置与人读优先 JSON/YAML。,2,Unity网络/Gameplay客户端,综合,场景题
+在 Unity 项目中引入 Protobuf（或同类库）时，集成与构建流程上要关注什么？,proto 编译为各端代码、生成物入版本库或 CI；与 IL2CPP/裁剪兼容性；命名空间与程序集划分；避免重复生成冲突。,2,Unity网络/Gameplay客户端,综合,技术知识
+如何用 Protobuf（或类似 IDL）描述一条网络消息并完成序列化与反序列化？,编写 .proto 定义 message 与字段号；用官方或第三方工具生成 C# 类；调用 SerializeToStream/ParseFrom；注意流式与内存块生命周期。,2,Unity网络/Gameplay客户端,综合,技术知识
+序列化与反序列化在帧同步或状态同步里一般放在什么环节？,逻辑层产出结构体→序列化为字节→套包头与校验→发送；收包后拆包、校验、反序列化→投递主线程逻辑；关键路径要避免额外分配。,2,Unity网络/Gameplay客户端,综合,技术知识
+与 JSON、XML 相比，Protobuf 的主要优势与代价是什么？为什么游戏里常用？,优势：体积小、解析快、强 schema；代价：可读性差、需工具链；游戏弱网高频交互更看重带宽与 CPU。,2,Unity网络/Gameplay客户端,网络,场景题
+Protobuf 为什么通常不适合作为「人类直接编辑」的配置格式？,二进制/需专用工具才能读；合并冲突难肉眼解决；配置更适合 JSON/YAML/TOML 等可读格式，再转表或打包。,2,Unity网络/Gameplay客户端,网络,技术知识
+在 Unity 中频繁 Protobuf 序列化时，如何减轻 GC 与临时分配？,复用 MemoryStream/CodedOutputStream；对象池化 message；避免每次 new 大数组；考虑栈上缓冲或 ArrayPool；评估源码生成选项。,4,Unity网络/Gameplay客户端,GC,行为题
+帧同步或确定性模拟中，Protobuf 常承担什么角色？有哪些注意点？,传输入帧或哈希校验块；注意定点数与字节序、字段顺序与版本、确定性（不用非确定浮点序列）；与 lockstep 校验配套。,4,Unity网络/Gameplay客户端,网络,技术知识
+Protobuf 与 FlatBuffers、Cap'n Proto 一类方案如何取舍？,都偏二进制高性能；FlatBuffers 可免解析直接读字段，适合只读多写少；Protobuf 生态与工具更普及；按访问模式与包大小实测。,2,Unity网络/Gameplay客户端,网络,技术知识
+在 Unity 里如何定义一条 Protobuf 消息并完成一次完整序列化与反序列化调用？,用 protoc 或 Gradle/MSBuild 插件生成 C#；创建 message 实例填字段；ToByteArray/WriteTo；对端 ParseFrom；大消息用流式接口。,2,Unity网络/Gameplay客户端,网络,场景题
+频繁 Protobuf 序列化/反序列化在 Unity 中可能带来哪些 GC 问题？如何优化？,临时 byte[]、MemoryStream、字符串转换会触发分配；优化：缓冲复用、对象池、避免反射路径、分帧处理大包、用 span/ArrayPool（视 API 支持）。,4,Unity网络/Gameplay客户端,GC,项目经历深挖
+如何保证 Protobuf 协议在客户端与服务器之间向前/向后兼容？,只新增字段不改号、保留旧字段号；可选字段与默认值语义；废弃字段用 reserved；双方协商最低兼容版本；集成测试老包新服与新包老服。,2,Unity网络/Gameplay客户端,网络,项目经历深挖
+通过 Socket 发送 Protobuf 数据时，如何解决粘包与拆包？,自定义帧头：魔数+长度+payload；先读满长度再 Parse；可加分片 ID、校验和；TLS/WebSocket 也需在应用层维护消息边界。,2,Unity网络/Gameplay客户端,网络,场景题
+除 protobuf-net 外还了解哪些序列化方案？与 MessagePack 等如何选型？,还有 MessagePack、FlatBuffers、MemoryPack、JSON；选型看语言支持、模式演进、包大小、GC、调试成本与团队熟悉度。,2,Unity网络/Gameplay客户端,网络,技术知识
+为一款实时对战游戏做「网络架构选型」时，你会从哪些维度比较状态同步与帧同步？,权威状态 vs 确定性回放；带宽与作弊面；断线重连与观战；服务器算力；是否需要 UDP 与预测回滚。,2,Unity网络/Gameplay客户端,网络,技术知识
+帧同步或状态同步方案中，「核心组件」一般包含哪些模块？,会话与匹配、网关、战斗房间、序列化、心跳与超时、重传与加密、日志与回放、监控指标。,2,Unity网络/Gameplay客户端,综合,技术知识
+表现层如何做状态插值与预测，以减少卡顿感？,服务器快照+时间戳，客户端插值缓冲；或预测+回滚；注意时钟同步与抖动缓冲深度 trade-off。,2,Unity网络/Gameplay客户端,综合,技术知识
+为什么说「同局人数很多、长期不结束」的 MMO 类玩法通常不适合纯帧同步？,帧同步需全员步调一致，人数↑带宽与等待↑；无限对局难以维护完整输入日志与追帧；更适合状态同步+兴趣管理。,4,Unity网络/Gameplay客户端,网络,项目经历深挖
+为什么「单局可无限进行」的长时玩法与帧同步难以兼得？,帧同步依赖每帧输入与确定性累积，长局增加存储与追帧成本；断线重连要重放全历史；大世界 MMO 多用状态同步分区。,4,Unity网络/Gameplay客户端,网络,场景题
+在 H5 或浏览器环境下做帧同步，传输层常如何选型？,浏览器受 WebSocket/TLS 限制，多为 TCP；需在应用层做心跳、丢包重传与缓冲；与原生 UDP+KCP 体验不同。,4,Unity网络/Gameplay客户端,网络,技术知识
+手游实时对战在 UDP/KCP 与 TCP 之间如何权衡？平台限制下怎么办？,UDP+可靠层可更好控延迟与重传；部分渠道封 UDP 只能 TCP；可 hybrid：关键帧 TCP、状态 UDP；配合 QoS 与弱网降级。,2,Unity网络/Gameplay客户端,网络,项目经历深挖
+面试中谈到「网络架构选择」时，你应展开哪些结论与论据？,同步模型、传输协议、服务器拓扑、反作弊、运维与监控、与 Unity 主线程模型衔接。,2,Unity网络/Gameplay客户端,网络,技术知识
+结合项目说明：网络模块里哪些「关键代码路径」最值得讲清（连接、发送、收包、分发）？,Connect→Send 队列→帧循环收包→解析→主线程派发；超时重连、线程安全队列、背压策略。,2,Unity网络/Gameplay客户端,综合,技术知识
+弱网与同步表现上，有哪些常见的「优化技术」？,冗余包、前向纠错、自适应发送频率、插值与本地预测、分频道优先级（移动 vs 技能）。,2,Unity网络/Gameplay客户端,综合,技术知识
+若面试官追问「Unity 里实现 2D 游戏有几种常见方式」，你应如何展开？,正交相机+Sprite/Tilemap；UI Canvas 驱动 2D；伪 2D（3D 场景压平）；各方案对合批、像素完美、物理选型（2D vs 3D）的影响。,2,Unity网络/Gameplay客户端,综合,项目经历深挖
+结合项目说明：使用协程时容易在资源与生命周期上踩哪些坑？,协程随 MonoBehaviour 销毁而停；嵌套 yield 与闭包捕获；与异步 Task 混用时的线程回主线程；别用协程掩盖长阻塞。,1,Unity网络/Gameplay客户端,协程,技术知识
+若面试官追问 C# 访问修饰符 private、public、protected、internal 的区别，如何答？,public 任意访问；private 类型内；protected 派生类；internal 程序集内；protected internal 组合；与 Unity 序列化可见性（SerializeField）区分。,1,Unity网络/Gameplay客户端,综合,项目经历深挖
+结合项目说明：需要频繁创建短生命周期对象时，如何避免内存与 GC 压力？,对象池、结构体与栈分配、复用集合、避免装箱、分帧 Instantiate、Asset 引用计数与 AB 卸载策略。,2,Unity网络/Gameplay客户端,内存,技术知识
+若面试官追问 string、StringBuilder 与 Java 中 StringBuffer 的差异，在 Unity/C# 语境下如何答？,C# string 不可变，+= 产生新串；StringBuilder 适合多次拼接；StringBuffer 是 Java 概念，C# 无同名类，可说明并回到 StringBuilder。,4,Unity网络/Gameplay客户端,综合,项目经历深挖
+结合项目说明：使用四元数 Quaternion 相对欧拉角有哪些优势与注意点？,无万向节锁、插值更稳（Slerp）；注意规范化与双覆盖；展示给策划可用欧拉，内部旋转用 Quaternion。,1,Unity网络/Gameplay客户端,综合,技术知识
+若面试官追问 Unity 物理碰撞全流程及对应回调，如何分阶段说明？,检测接触→OnCollisionEnter/Stay/Exit 或 Trigger 对应 OnTrigger*；FixedUpdate 中解算；注意层矩阵、刚体运动学、连续碰撞检测。,2,Unity网络/Gameplay客户端,物理,项目经历深挖
+结合项目说明：MipMap 的作用与滥用会带来什么问题？,远距用更小 mip 减采样与缓存友好；代价是内存约增三分之一；UI/2D 精灵常可关 mip；各向异性过滤与 mip 搭配。,2,Unity网络/Gameplay客户端,综合,技术知识
+若面试官追问「为何移动平台常寻求替代原生 IMGUI/旧 GUI」，从性能与体验如何答？,旧 OnGUI 每帧开销大、难以做出复杂 UI；UGUI/TMP 与合批、图集、适配方案更成熟；需结合项目年代说明。,2,Unity网络/Gameplay客户端,综合,项目经历深挖
+结合项目说明：如何在 Unity 中查看面数、顶点数与 Draw Call，并有效降低 Draw Call？,Stats、Frame Debugger、Profiler；手段：批处理、图集、GPU Instancing、SRP Batcher、减少材质与过度叠层。,2,Unity网络/Gameplay客户端,综合,技术知识
+若面试官追问「层剔除（Layer Cull Distance）」细节，如何说明？,在 Camera.layerCullDistances 按 Layer 设最大可视距离，减少远距小物绘制；注意阴影与玩法可见性一致。,2,Unity网络/Gameplay客户端,综合,项目经历深挖
+结合项目说明：射线检测的原理与性能注意点有哪些？,从点沿方向与碰撞体求交，依赖层掩码与查询触发器开关；Physics.Raycast 有 NonAlloc 版本；避免每帧大量射线。,4,Unity网络/Gameplay客户端,物理,技术知识
+若面试官追问 Skinned Mesh 渲染原理，如何从骨骼、蒙皮与 GPU 管线说明？,骨骼层级驱动顶点；CPU/GPU 蒙皮把权重应用到顶点；BlendShape 附加形变；Optimize Game Objects 减少骨骼节点开销。,3,Unity网络/Gameplay客户端,综合,项目经历深挖
+结合项目说明：使用过 WWW（或 UnityWebRequest）时容易踩哪些坑？,WWW 已过时；注意下载线程、证书、超时、缓存、大文件分块与内存峰值；主线程回调与对象释放。,2,Unity网络/Gameplay客户端,综合,技术知识

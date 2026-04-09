@@ -27,7 +27,7 @@ pip install -r requirements.txt
 - Ollama: run `ollama serve` and optionally set `OLLAMA_BASE_URL` (defaults to http://localhost:11434).
 3) Run the app:
 ```
-streamlit run streamlit_app.py
+python -m streamlit run streamlit_app.py
 ```
 
 ## Configuration

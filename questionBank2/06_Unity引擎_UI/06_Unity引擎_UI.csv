@@ -1,0 +1,63 @@
+﻿题目,答案要点,难度,相关岗位,标签,题目类型
+UGUI 合批常见受哪些因素影响？,需同 Canvas、同材质与同一纹理（图集），深度连续；字体与 UI 图集常不一致导致无法合批；Mask/自定义材质会打断；动态元素频繁改顶点会触发重建，宜动静分离或多 Canvas。,2,Unity客户端（UI向）,UI,行为题
+UGUI 合批常见受哪些因素影响？,需同 Canvas、同材质与同一纹理（图集），深度连续；字体与 UI 图集常不一致导致无法合批；Mask/自定义材质会打断；动态元素频繁改顶点会触发重建，宜动静分离或多 Canvas。,2,Unity客户端（UI向）,UI,行为题
+Unity 内置光源类型有哪些？,Directional（平行光）、Point（点光源）、Spot（聚光灯）、Area（区域光，多用于烘焙）；移动端常用前三种，注意阴影与逐像素灯数量对性能影响。,2,Unity客户端（UI向）,综合,技术知识
+顶点着色器与片元（像素）着色器分别做什么？,顶点着色器按顶点运行，做空间变换、骨骼蒙皮、逐顶点光照与数据传递到下一阶段；片元着色器在光栅化后对每个片元运行，做纹理采样、光照与混合。二者都在 GPU 上执行，取代固定管线中的变换与多重纹理阶段。,4,Unity客户端（UI向）,综合,技术知识
+Skinned Mesh 的渲染原理是什么？,网格顶点受骨骼矩阵与权重（蒙皮）驱动，CPU 或 GPU 做骨骼动画与蒙皮计算后提交渲染；相比静态 Mesh 每帧顶点位置会变，需注意骨骼数量、更新频率与 GPU Skinning 对性能的影响。,3,Unity客户端（UI向）,综合,场景题
+MeshRenderer 的 material 与 sharedMaterial 有什么区别？,sharedMaterial 修改会影响所有共享该资源的物体并写回工程内材质资产；material 访问会为该 Renderer 创建材质实例，适合仅局部修改但易造成内存与合批问题；只读展示用 sharedMaterial，需独立参数用 material 并记得销毁实例。,4,Unity客户端（UI向）,综合,技术知识
+Unity 里面怎么打图集？,Sprite Atlas（或旧版 Sprite Packer）将散图打包；设置 Include in Build、按标签/文件夹分组；注意图集尺寸与平台限制。,2,Unity客户端（UI向）,综合,技术知识
+如何解决图集边缘撕裂？,留足够 padding、用双线性过滤、避免图块紧贴 Atlas 边界；必要时九宫格或内缩 UV。,2,Unity客户端（UI向）,综合,技术知识
+动态UI元素如何优化？,局部重绘、禁用不可见元素、减少 Layout 每帧刷新、对象池列表项、拆分动态 Canvas。,2,Unity客户端（UI向）,综合,技术知识
+为什么图片的大小要设成2的N次方？,部分平台与压缩格式要求 2 的幂次 mip 与内存对齐；非幂次可能扩容或无法压缩；现部分格式已放宽但仍建议遵循规范。,2,Unity客户端（UI向）,综合,行为题
+打图集的策略是什么？,按界面/功能分组、控制单 Atlas 尺寸、公用元素放 common、动态与静态分图集以平衡内存与 DrawCall。,2,Unity客户端（UI向）,综合,技术知识
+打图集时可以合批的条件是什么？,同 Canvas、同 Atlas 材质、深度连续、无 Mask 打断；与 Graphic 材质实例一致。,2,Unity客户端（UI向）,UI,场景题
+结合 Unity 项目经验，请说明「材质与纹理一致」指什么、常见用法及注意点？,同一 DrawCall 需相同材质实例与同一纹理（图集）；字体常单独图集易打断合批。,2,Unity客户端（UI向）,综合,技术知识
+结合 Unity 项目经验，请说明「层级连续无打断」指什么、常见用法及注意点？,兄弟节点顺序与材质排序影响批处理；穿插不同材质会拆分批次。,2,Unity客户端（UI向）,综合,技术知识
+结合 Unity 项目经验，请说明「无特殊组件干扰」指什么、常见用法及注意点？,Mask、RectMask2D、Outline、部分特效材质会打断合批；需要则单独 Canvas 或接受开销。,2,Unity客户端（UI向）,综合,技术知识
+结合 Unity 项目经验，请说明「UGUI合批优先级排序」指什么、常见用法及注意点？,按材质/纹理/深度等排序后再合批；同 Canvas 下更易合并；多 Canvas 增加合批边界。,2,Unity客户端（UI向）,UI,技术知识
+结合 Unity 项目经验，请说明「合批成功与失败案例」指什么、常见用法及注意点？,成功：同图集图标列表；失败：插入不同 Atlas 的 Image 或 Mask 夹在中间；用 Frame Debugger 验证。,2,Unity客户端（UI向）,UI,行为题
+UGUI中锚点是什么？,定义 RectTransform 相对父矩形参考点的比例与固定边距，用于多分辨率适配；锚点聚一点时等比缩放，拉伸时锚框决定哪条边固定。,2,Unity客户端（UI向）,UI,技术知识
+Image 和 RawImage 的区别？,Image 用 Sprite/图集，支持九宫格与类型；RawImage 直接贴任意 Texture，无切片但更轻量，适合视频渲染纹理等。,1,Unity客户端（UI向）,UI,行为题
+Unity 中的 Canvas 渲染模式有哪些？,Screen Space Overlay/Camera、World Space；Overlay 不经相机排序；Camera 模式可调整平面距离与排序层。,1,Unity客户端（UI向）,UI,技术知识
+结合 Unity 项目经验，请说明「方法一：禁用 UI 元素的 Raycast Target（最简单）」指什么、常见用法及注意点？,不需要接收射线时关掉 Raycast Target，减少 GraphicRaycaster 遍历开销，是最常见优化。,2,Unity客户端（UI向）,综合,场景题
+结合 Unity 项目经验，请说明「方法二：使用 Canvas Group 的 Blocks Raycasts」指什么、常见用法及注意点？,父节点统一开关射线阻挡，适合弹窗蒙层；与 Alpha 联动做渐隐时仍可控交互。,2,Unity客户端（UI向）,UI,技术知识
+结合 Unity 项目经验，请说明「方法三：实现接口，手动传递事件（最灵活）」指什么、常见用法及注意点？,用接口或自定义 InputModule 精确分发事件，适合复杂 UI 与 3D/2D 混合交互，灵活但实现成本高。,2,Unity客户端（UI向）,委托与事件,技术知识
+结合 Unity 项目经验，请说明「方法四：确保存在正确的 Raycaster（用于3D/2D物体）」指什么、常见用法及注意点？,EventSystem 需 PhysicsRaycaster/Physics2DRaycaster；相机与 Layer 要匹配，否则点不到物体。,2,Unity客户端（UI向）,综合,技术知识
+结合 Unity 项目经验，请说明「推荐用法」指什么、常见用法及注意点？,优先关无用 Raycast Target；复杂交互再上 CanvasGroup 或自定义分发；调试时用 EventSystem 可视化射线。,2,Unity客户端（UI向）,综合,场景题
+重建(Rebuild)和重绘(Repaint)是什么？两者有什么区别？,Rebuild 重新计算布局与网格（Layout/Graphic rebuild）；Repaint 是 CanvasRenderer 把网格提交渲染；频繁改布局会触发前者，开销更大。,1,Unity客户端（UI向）,综合,项目经历深挖
+结合 Unity 项目经验，请说明「减少重建频率」指什么、常见用法及注意点？,动静分离、合并布局变更、避免每帧改 ContentSizeFitter、缓存字符串；必要时延迟一帧刷新。,2,Unity客户端（UI向）,综合,技术知识
+结合 Unity 项目经验，请说明「降低重绘开销」指什么、常见用法及注意点？,减 Canvas 数量、合图集、关不可见 UI 的 CanvasRenderer、降低 Overdraw。,2,Unity客户端（UI向）,综合,技术知识
+结合 Unity 项目经验，请说明「工具定位瓶颈」指什么、常见用法及注意点？,Profiler UI 模块、Frame Debugger 看批次、Memory 看网格与贴图；真机分档对比。,2,Unity客户端（UI向）,综合,技术知识
+UGUI 合批条件是什么？,同 Canvas、同材质与纹理（含图集）、深度可批、未被 Mask 等特殊材质打断。,2,Unity客户端（UI向）,UI,技术知识
+UGUI 深度规则？,按层级与覆盖关系计算深度；兄弟顺序影响绘制与合批；Canvas 可覆写排序。,2,Unity客户端（UI向）,UI,技术知识
+打断合批的条件？,不同材质/纹理/图集、Mask、自定义材质、Text 与 Image 图集不一致、CanvasRenderer 材质变更等。,2,Unity客户端（UI向）,UI,场景题
+UGUI 合批流程？,遍历可批元素排序，相邻且材质纹理一致则合并网格提交，否则拆分 DrawCall。,2,Unity客户端（UI向）,UI,技术知识
+UGUI 合批条件是什么？,同 Canvas、同材质与纹理（含图集）、深度可批、未被 Mask 等特殊材质打断。,2,Unity客户端（UI向）,UI,技术知识
+UGUI 深度规则？,按层级与覆盖关系计算深度；兄弟顺序影响绘制与合批；Canvas 可覆写排序。,2,Unity客户端（UI向）,UI,场景题
+打断合批的条件？,不同材质/纹理/图集、Mask、自定义材质、Text 与 Image 图集不一致、CanvasRenderer 材质变更等。,2,Unity客户端（UI向）,UI,技术知识
+UGUI 合批流程？,遍历可批元素排序，相邻且材质纹理一致则合并网格提交，否则拆分 DrawCall。,2,Unity客户端（UI向）,UI,技术知识
+结合 Unity 项目经验，请说明「深度计算（Depth Calculation）」指什么、常见用法及注意点？,根据层级、覆盖与局部 Z 计算绘制顺序，决定哪些网格可合并。,2,Unity客户端（UI向）,综合,项目经历深挖
+结合 Unity 项目经验，请说明「多级排序（四级排序规则）」指什么、常见用法及注意点？,材质、纹理、深度、渲染顺序等多关键字排序；保证合批稳定与遮挡正确。,2,Unity客户端（UI向）,数据结构,场景题
+结合 Unity 项目经验，请说明「合批执行」指什么、常见用法及注意点？,CPU 侧合并顶点索引，减少 DrawCall；GPU 仍受 Overdraw 与填充率限制。,2,Unity客户端（UI向）,UI,技术知识
+结合 Unity 项目经验，请说明「材质与纹理不一致」指什么、常见用法及注意点？,不同 Shader 或贴图无法同一批次；需统一图集或材质变体策略。,2,Unity客户端（UI向）,综合,场景题
+结合 Unity 项目经验，请说明「层级与遮挡问题」指什么、常见用法及注意点？,半透明与遮挡关系会改变排序需求，可能强制拆分 DrawCall。,2,Unity客户端（UI向）,综合,技术知识
+结合 Unity 项目经验，请说明「特殊组件强制中断」指什么、常见用法及注意点？,Mask、RectMask2D、TMP 材质差异等会插入新材质通道。,2,Unity客户端（UI向）,综合,技术知识
+结合 Unity 项目经验，请说明「其他中断因素」指什么、常见用法及注意点？,Canvas 拆分、动态材质实例化、Sprite Atlas 变更、Shader 关键字不同。,2,Unity客户端（UI向）,综合,项目经历深挖
+结合 Unity 项目经验，请说明「案例1：成功合批」指什么、常见用法及注意点？,同图集多 Image 顺序排列、无 Mask，Frame Debugger 显示单次批处理。,2,Unity客户端（UI向）,UI,技术知识
+结合 Unity 项目经验，请说明「案例2：合批中断」指什么、常见用法及注意点？,中间插入不同 Atlas 的图标或自定义材质，批次被拆分。,2,Unity客户端（UI向）,UI,技术知识
+结合 Unity 项目经验，请说明「案例3：Mask导致的合批中断」指什么、常见用法及注意点？,Stencil 材质使遮罩内外无法与同图集无遮罩合批，需单独分组或减遮罩范围。,2,Unity客户端（UI向）,UI,场景题
+若面试官追问「射线检测碰撞物的原理是?」的实现或原理细节，你会从哪些角度展开说明？,从 Physics.Raycast/RaycastAll 入手：射线原点、方向、最大距离、LayerMask 决定命中集合与顺序。本质是离散时刻与碰撞体近似几何求交，非连续 CCD；开销与场景碰撞体数量相关。优化：收窄 Mask、降调用频率、粗测剔除、避免 RaycastAll 的高分配；物理 API 须在主线程调用。,4,Unity客户端（UI向）,物理,项目经历深挖
+结合项目经验说明「写出 Animation 的五个方法」时，容易踩坑的点有哪些？,Legacy Animation 常见 API：Play、CrossFade、Stop、Rewind、Sample（按版本略有差异）。坑：与 Animator 混用难维护；动画事件与速度缩放导致触发错位；资源卸载后 clip 引用失效。,2,Unity客户端（UI向）,综合,技术知识
+若面试官追问「ScriptableObject」的实现或原理细节，你会从哪些角度展开说明？,SO 是可序列化资产对象，适合配置数据、共享资源引用，运行时多实例可共享同一份资产。注意不要把会话态写进磁盘资产；加载随 AB/场景；与 MonoBehaviour 生命周期不同。在编辑器改 SO 要标记 Dirty 并 SaveAssets；热更项目注意 SO 与代码版本兼容。,3,Unity客户端（UI向）,综合,项目经历深挖
+结合项目经验说明「在类的构造函数前加上static会报什么错?为什么?」时，容易踩坑的点有哪些？,构造函数不能声明为 static；static“构造”用静态字段初始化或静态构造函数（C#），误写在实例构造函数前加 static 会编译错误。Unity 中还要注意脚本编译顺序与运行时初始化时机。,2,Unity客户端（UI向）,综合,技术知识
+若面试官追问「Heap与Stack有何区别?」的实现或原理细节，你会从哪些角度展开说明？,栈：值类型局部量、调用帧，速度快、容量小、随函数返回释放。堆：引用类型对象与装箱值，由 GC 管理；关注托管堆碎片与 GC 压力。结合 Unity：避免 Update 里临时 List/字符串造成堆分配；大对象池化或复用。,1,Unity客户端（UI向）,综合,项目经历深挖
+结合项目经验说明「什么是装箱拆箱，怎样减少操作」时，容易踩坑的点有哪些？,装箱：值类型装箱为 object/接口，产生堆分配与拷贝；拆箱再转回值类型。减少：泛型集合替代非泛型 ArrayList、避免值类型变参、用 Span/struct 枚举模式。,1,Unity客户端（UI向）,综合,技术知识
+若面试官追问「简述一下对象池，你觉得在FPS里哪些东西适合使用对象池？」的实现或原理细节，你会从哪些角度展开说明？,原理：预分配/复用实例，摊薄 Instantiate/Destroy 与 GC 峰值。FPS 常用：弹孔、弹道特效、伤害飘字、敌人/子弹、音频源；池大小按峰值与内存预算定。坑：OnEnable/OnDisable 重置状态、池满策略（丢弃或扩容）、与对象池和对象生命周期的线程边界。,1,Unity客户端（UI向）,综合,项目经历深挖
+结合项目经验说明「如何销毁一个UnityEngine.Object及其子类？」时，容易踩坑的点有哪些？,Destroy(obj) 标记销毁，延迟到帧末；DestroyImmediate 编辑器慎用。子对象随父销毁；注意事件与委托未解绑导致泄漏；DontDestroyOnLoad 对象跨场景引用要手动管理。,2,Unity客户端（UI向）,综合,技术知识
+若面试官追问「U3D中用于记录节点空间几何信息的组件名称，及其父类名称」的实现或原理细节，你会从哪些角度展开说明？,组件是 RectTransform，继承 Transform；负责 UI 矩形、锚点与轴心在父布局下的位置与尺寸。与普通 Transform 相比多了 anchoredPosition/sizeDelta 等；父级 Canvas 与 Layout 会影响最终布局。,2,Unity客户端（UI向）,综合,项目经历深挖
+结合项目经验说明「Unity和cocos2d的区别」时，容易踩坑的点有哪些？,引擎工作流差异：Unity 组件化+Prefab+Mecanim；Cocos 常见节点树+组件脚本体系因版本而异。坑：资源与脚本热更方案、2D/3D 管线选型、团队栈与工具链迁移成本。,1,Unity客户端（UI向）,综合,技术知识
+若面试官追问「将图片的TextureType选项分别选为Texture和Sprite有什么区别」的实现或原理细节，你会从哪些角度展开说明？,Texture 类型偏通用贴图采样，常用于模型、RawImage、Shader 输入；Sprite 类型生成图集与精灵矩形，服务 UI/Image。导入设置影响压缩、读写、Mipmap；UI 多用 Sprite 以合批；混用会改变材质与 DrawCall。,1,Unity客户端（UI向）,综合,项目经历深挖
+结合项目经验说明「什么叫做链条关节?」时，容易踩坑的点有哪些？,常指 HingeJoint 等链式约束：设置锚点、轴向、马达与限制；质量比与 Solver 迭代影响稳定性。坑：抖动穿模调刚体质量、碰撞体形状与 Continuous 模式；复杂绳链用 ConfigurableJoint 或物理插件。,2,Unity客户端（UI向）,综合,技术知识
+若面试官追问「请简述如何在不同分辨率下保 持UI的一致性」的实现或原理细节，你会从哪些角度展开说明？,Canvas Scaler（参考分辨率 + 匹配宽高比）配合锚点：等比缩放或固定边距。多分辨率测试矩阵；安全区与异形屏；文字用 TMP 动态字体的字号与自动尺寸策略。,3,Unity客户端（UI向）,综合,项目经历深挖
+结合项目经验说明「客户端与服务器交互方式有几种？」时，容易踩坑的点有哪些？,常见：HTTP/REST、WebSocket、自定义 TCP/UDP 协议、RPC 框架。坑：弱网重连与幂等、序列化版本、加密与防作弊、主线程消息队列与背压。,2,Unity客户端（UI向）,综合,技术知识
+若面试官追问「请问alpha test在何时使用？能达到什么效果？」的实现或原理细节，你会从哪些角度展开说明？,Alpha Test（clip/discard）在片元阶段按阈值丢弃像素，形成硬边透明，常早于深度写入。效果：镂空植被、栅栏等；与 Alpha Blend 不同，后者做半透明混合易乱序。坑：过度依赖 clip 影响 Early-Z；移动端带宽与 overdraw 仍需控制。,4,Unity客户端（UI向）,综合,项目经历深挖

@@ -1,0 +1,81 @@
+﻿题目,答案要点,难度,相关岗位,标签,题目类型
+Vue 有了数据响应式，为何还要 diff ？,数据响应式负责感知数据变化并通知视图需要更新，但无法知道具体要更新哪个DOM节点，直接全量重绘会造成极大性能浪费，diff算法通过对比新旧虚拟DOM，精准找到最小改动点，只更新必要的DOM，实现高效渲染，响应式负责“触发更新”，diff负责“高效更新”，二者缺一不可。,5,web前端开发,Vue、Object.defineProperty、数据绑定、Proxy、响应式,技术知识
+vue3 为什么不需要时间分片？,Vue3依靠精准的响应式依赖追踪、编译优化（静态提升、PatchFlags）和高效diff，每次更新范围极小、耗时极短，不会阻塞主线程，而React是全量组件比对，必须用时间分片拆分任务，因此Vue3无需时间分片也能保持流畅运行。,4,web前端开发,Vue、Object.defineProperty、事件循环、重绘,技术知识
+vue3 为什么要引入 Composition API ？,为了解决Options API在复杂组件中逻辑分散、难以维护的问题，Composition API按业务逻辑聚合代码，支持更清晰的逻辑复用，避免mixin的命名冲突和来源不明问题，同时对TypeScript更友好，类型推导更自然，让大型项目更易维护和扩展。,2,web前端开发,Vue、Composition API、Options API、类型推断,技术知识
+谈谈 Vue 事件机制，并手写$on、$off、$emit、$once,Vue事件机制基于发布订阅模式，通过事件中心维护事件与回调映射，$on用于订阅事件，$emit用于触发事件，$off用于取消订阅，$once用于只执行一次的订阅，手写时维护一个事件缓存对象，$on将回调存入对应事件数组，$emit遍历执行对应回调，$off移除指定或全部回调，$once包装回调执行后自动解绑。,5,web前端开发,Vue,技术知识
+computed 计算值为什么还可以依赖另外一个 computed 计算值？,computed本质是响应式依赖的缓存计算，当一个computed依赖另一个computed时，会自动建立依赖链，底层数据变化后，被依赖的computed会先更新，依赖它的computed随之更新，依赖收集系统会完整追踪整条链路，同时保留缓存特性，保证计算效率与正确性。,5,web前端开发,Vue、computed、响应式、缓存,技术知识
+说一下 vm.$set 原理,Vue2无法监听对象新增属性和数组索引修改，$set可以为对象新增响应式属性，或通过splice修改数组，内部使用defineReactive为属性添加getter/setter，并手动触发依赖更新，使新增数据具备响应式并触发视图更新，Vue3基于Proxy则不再需要$set。,5,web前端开发,Vue、Object.defineProperty、watch、递归、Set,技术知识
+怎么在 Vue 中定义全局方法？,Vue2可将方法挂载到Vue.prototype，Vue3使用app.config.globalProperties，也可通过插件或全局mixin注册，使所有组件实例能通过this直接访问，实现全局通用方法的调用。,2,web前端开发,Vue,技术知识
+Vue 中父组件怎么监听到子组件的生命周期？,父组件可通过@hook:xxx监听子组件生命周期，如@hook:mounted，也可让子组件在生命周期钩子中触发自定义事件，父组件监听该事件，两种方式都能让父组件感知子组件的生命周期执行时机。,2,web前端开发,Vue、Ref,技术知识
+vue组件里写的原生addEventListeners监听事件，要手动去销毁吗？为什么？,必须手动销毁，因为原生事件监听不会随组件销毁自动移除，会持续占用内存并可能导致异常执行，需要在onUnmounted/beforeDestroy中调用removeEventListener清除，避免内存泄漏。,4,web前端开发,Vue、内存泄漏、垃圾回收、DOM,技术知识
+说说 vue3 中的响应式设计原理,Vue3响应式基于Proxy实现，代理整个对象，拦截get/set/delete等操作，get时收集依赖，set时触发更新，使用WeakMap、Map、Set维护依赖关系，支持监听对象新增删除、数组索引与length变化，比defineProperty更强大、性能更好且无需递归遍历。,5,web前端开发,Vue、响应式原理、WeakMap、HTTPS、响应式,技术知识
+Vue中，created和mounted两个钩子之间调用时间差值受什么影响？,差值受模板复杂度、虚拟DOM渲染耗时、子组件数量与渲染速度、同步代码执行耗时、浏览器性能影响，模板越复杂、子组件越多，中间耗时越长。,4,web前端开发,Vue、数据绑定、DOM、编译,技术知识
+vue中，推荐在哪个生命周期发起请求？,推荐在created中发起，可更早请求数据，缩短页面等待时间，若需要DOM则使用mounted，服务端渲染场景下只能使用created，因为mounted在服务端不执行。,2,web前端开发,Vue、内存泄漏、SSR、DOM,技术知识
+为什么 react 需要 fiber 架构，而 Vue 却不需要？,React更新是全量比对虚拟DOM，同步递归执行会阻塞主线程，Fiber可拆分任务、中断恢复，Vue基于响应式精准更新组件，范围小、速度快，不会长时间阻塞，因此不需要Fiber架构。,5,web前端开发,Vue、Fiber、懒加载、响应式,技术知识
+SPA（单页应用）首屏加载速度慢怎么解决？,可通过路由懒加载、代码分割、资源压缩、图片优化、CDN加速、启用Gzip、预加载、骨架屏、SSR/SSG等方式减小包体积、提升加载速度、优化用户感知体验。,3,web前端开发,Vue、Service Worker、首屏优化、localStorage,技术知识
+说下Vite的原理,Vite开发环境基于浏览器原生ES Modules按需加载，无需打包，依赖使用esbuild预构建，启动极快，热更新精准，生产环境使用Rollup打包，兼顾开发体验与生产性能。,3,web前端开发,Vue、HTTPS、Webpack、Vite,技术知识
+Vue2.0为什么不能检查数组的变化，该怎么解决？,Vue2基于Object.defineProperty无法监听数组索引和length修改，解决方式是使用splice、$set、重写数组方法，或直接替换数组，Vue3已通过Proxy彻底解决该问题。,2,web前端开发,Vue、Object.defineProperty、Proxy、watch,技术知识
+说说Vue 页面渲染流程,Vue先初始化实例，编译模板为render函数，执行render生成虚拟DOM，通过patch将虚拟DOM转为真实DOM并挂载，数据更新时重新生成虚拟DOM，diff比对后更新真实DOM。,4,web前端开发,Vue、响应式原理、watch、响应式,技术知识
+vue中computed和watch区别？,computed是计算属性，具有缓存，依赖不变则直接返回结果，用于派生状态；watch用于监听数据变化执行副作用，支持异步，无缓存，适用场景不同。,2,web前端开发,Vue、双向绑定、computed、watch,技术知识
+vuex中的辅助函数怎么使用？,mapState、mapGetters映射到computed，mapMutations、mapActions映射到methods，支持数组和对象写法，开启命名空间后可指定模块名，简化vuex的使用。,2,web前端开发,Vue、Vuex、computed、namespace,技术知识
+如果使用Vue3.0实现一个 Modal，你会怎么进行设计？,使用Teleport挂载到body，通过v-model控制显示隐藏，提供标题、内容、底部插槽，支持点击遮罩关闭、ESC关闭，加入过渡动画，提供命令式与组件式两种调用方式。,5,web前端开发,Vue、setup、DOM、JSX,技术知识
+Vue 3.0中Treeshaking特性是什么，并举例进行说明？,Tree-shaking基于ES模块，打包时剔除未使用代码，Vue3按模块导出API，未使用的功能不会被打包，例如只引入ref则computed不会被打包进最终产物。,3,web前端开发,Vue、Tree Shaking、computed、watch,技术知识
+Vue3.0 所采用的 Composition Api 与 Vue2.x 使用的 Options Api 有什么不同？,Options API按选项分割代码，复杂组件难以维护；Composition API按业务逻辑组织代码，复用性更强、无命名冲突、TypeScript支持更好，更适合大型项目。,2,web前端开发,Vue、Composition API、Options API、类型推断,技术知识
+Vue3.0 性能提升主要是通过哪几方面体现的？,通过Proxy响应式、编译优化（静态提升、PatchFlags、事件缓存）、高效diff、体积更小、渲染更快等多方面实现整体性能飞跃。,4,web前端开发,Vue、diff算法、Proxy、computed,技术知识
+Vue3.0的设计目标是什么？做了哪些优化？,设计目标是更小、更快、更易维护、更好支持TS，优化包括响应式重构、编译优化、Composition API、Tree-shaking、虚拟DOM优化等。,2,web前端开发,Vue、Object.defineProperty、Composition API、Options API,技术知识
+你是怎么处理vue项目中的错误的？,使用全局errorHandler捕获渲染错误，errorCaptured捕获组件树错误，axios拦截器处理接口错误，配合try/catch处理异步错误，实现全链路异常捕获与上报。,2,web前端开发,Vue、Promise、接口、递归,项目经历深挖
+Vue项目如何进行部署？是否有遇到部署服务器后刷新404问题？,打包为dist目录部署到nginx等静态服务，history模式刷新404是因为路由由前端管理，服务端无对应文件，需配置try_files指向index.html交由前端处理。,3,web前端开发,Vue、HTTP、Nginx,技术知识
+Vue项目中如何解决跨域问题？,开发环境使用webpack/vite代理，生产环境使用CORS、nginx反向代理或JSONP，最常用的是前端配置代理，后端配置CORS。,2,web前端开发,Vue、跨域、Proxy、HTTP,技术知识
+Vue怎么实现权限管理？控制到按钮级别的权限怎么做？,路由权限通过动态添加路由实现，菜单权限由后端返回过滤，按钮权限使用自定义指令、v-if判断权限码，接口权限通过token校验实现全链路控制。,2,web前端开发,Vue、JWT、Token、接口,技术知识
+大型项目中，Vue项目怎么划分结构和划分组件比较合理呢？,按业务模块划分目录，公共组件放components，页面放views，工具、样式、路由、store分层管理，组件按复用性、业务独立性拆分，提高可维护性。,2,web前端开发,Vue、import,技术知识
+Vue项目中有封装过axios吗？怎么封装的？,封装axios统一配置请求头、超时、基础URL，通过请求拦截器添加token，响应拦截器处理状态码、错误提示，统一管理接口，简化调用与维护。,2,web前端开发,Vue、跨域、Promise、HTTP、Axios,技术知识
+说说vue中的diff算法,Vue diff是同层比对，双指针从两端向中间逼近，优先匹配头尾相同节点，利用key复用节点，最小化DOM操作，提升更新效率。,4,web前端开发,Vue、diff算法、watch、DOM,技术知识
+什么是虚拟DOM？如何实现一个虚拟DOM？说说你的思路？,虚拟DOM是用JS对象描述真实DOM的结构，实现时定义VNode类，包含tag、props、children，通过h函数创建虚拟节点，再通过patch方法映射到真实DOM。,5,web前端开发,Vue、Virtual DOM、虚拟DOM、Context,技术知识
+说说你对Vue中 keep-alive 的理解,keep-alive是内置组件，用于缓存组件实例，避免重复创建销毁，提升切换性能，提供activated、deactivated钩子，支持include、exclude、max控制缓存规则。,3,web前端开发,Vue、正则表达式、keep-alive、DOM,技术知识
+Vue.observable是什么？,Vue.observable用于将普通对象转为响应式对象，可用于简单跨组件状态共享，是轻量级状态管理方案，适用于小型状态管理场景。,2,web前端开发,Vue、Vuex、响应式,技术知识
+说说你对slot的理解？slot使用场景有哪些？,slot是插槽，用于组件内容分发，分为默认、具名、作用域插槽，常用于弹窗、列表、布局组件，让组件更灵活、可定制性更强。,3,web前端开发,Vue、Web Components、作用域、DOM,技术知识
+说说你对vue的mixin的理解，以及有哪些应用场景？,mixin用于组件逻辑复用，会与组件选项合并，可提取公共逻辑，但存在命名冲突、来源不清问题，适用于复用简单逻辑，复杂场景建议用Composition API替代。,5,web前端开发,Vue、computed、watch、递归,技术知识
+Vue中的$nextTick有什么作用？,$nextTick会在DOM更新完成后执行回调，用于获取更新后的DOM节点、操作最新渲染结果，解决数据更新后无法立即获取DOM的问题。,4,web前端开发,Vue、MutationObserver、事件循环、Promise、nextTick,技术知识
+Vue组件间通信方式都有哪些？,常用方式有props/$emit、eventBus、$parent/$children、ref、provide/inject、vuex/pinia，适用于不同层级与关系的组件通信。,2,web前端开发,Vue、作用域、Vuex、class,技术知识
+Vue中组件和插件有什么区别？,组件是UI与逻辑的复用单元，插件是功能扩展，用于添加全局方法、指令、混入等，组件以标签使用，插件通过Vue.use安装。,2,web前端开发,Vue、接口,技术知识
+为什么Vue中的data属性是一个函数而不是一个对象？,组件可能被多次实例化，data为函数时每次返回新对象，避免多个组件实例共享同一个数据对象，导致状态互相污染。,2,web前端开发,Vue,技术知识
+说说你对Vue生命周期的理解,Vue生命周期是组件从创建到销毁的过程，包括创建、挂载、更新、销毁四个阶段，提供钩子函数允许在不同阶段执行逻辑，控制组件行为。,2,web前端开发,Vue、箭头函数、computed、watch,技术知识
+Vue实例挂载的过程中发生了什么？,挂载时执行beforeMount，编译render函数生成虚拟DOM，转为真实DOM插入页面，完成后执行mounted，期间完成响应式、依赖收集与DOM渲染。,4,web前端开发,Vue、watch、响应式、DOM,技术知识
+谈谈对Vue中双向绑定的理解,双向绑定是数据变化更新视图，视图变化同步数据，底层基于响应式+事件监听，v-model是语法糖，本质是value属性与input事件的结合。,4,web前端开发,Vue、数据绑定、双向绑定、watch,技术知识
+Vue 模板是如何编译的？,模板编译分为解析生成AST、优化AST、生成render函数三步，解析模板标签指令，标记静态节点，最终转为可执行的渲染函数。,2,web前端开发,Vue、模板字符串、DOM、AST、编译,技术知识
+说说 Vue 中 CSS scoped 的原理,scoped通过给组件DOM添加唯一属性data-v-xxx，样式选择器后追加属性选择器，实现样式只作用于当前组件，避免样式污染。,3,web前端开发,Vue、Webpack、模块化,技术知识
+说说你对渐进式框架的理解,渐进式框架主张按需使用，从核心视图层开始，可逐步引入路由、状态管理、构建工具等，无需一开始全量使用，自底向上逐步扩展。,2,web前端开发,Vue,技术知识
+Vue中的 v-show 和 v-if 有什么区别？,v-show通过display控制显示隐藏，DOM始终存在，切换开销小；v-if动态销毁和创建DOM，切换开销大但初始不渲染，适合不同切换频率场景。,2,web前端开发,Vue、DOM、编译,技术知识
+Vue3.0里为什么要用 Proxy API 替代 defineProperty API ？,Proxy可监听对象增删、数组索引与length，无需递归遍历，性能更好，功能更强大，解决了defineProperty无法监听动态属性的缺陷。,3,web前端开发,Vue、Object.defineProperty、Proxy、枚举,技术知识
+SSR是什么？Vue中怎么实现？,SSR是服务端渲染，在服务端将组件渲染为HTML字符串返回给客户端，提升首屏速度与SEO，Vue可通过Nuxt.js或vue-server-renderer实现。,2,web前端开发,Vue、Vue Router、Express、Webpack,技术知识
+vue的祖孙组件的通信方案有哪些？,可使用provide/inject、eventBus、vuex/pinia、$attrs/$listeners，多层级通信优先使用全局状态管理或依赖注入。,2,web前端开发,Vue、Vuex、响应式,技术知识
+如何打破 scope 对样式隔离的限制？,使用:deep()、::v-deep、/deep/深度选择器，可穿透scoped限制，影响子组件内部样式。,3,web前端开发,Vue、作用域、继承、DOM,技术知识
+Scoped Styles 为什么可以实现样式隔离？,通过给组件DOM添加唯一标识属性，样式编译后自动带上该属性选择器，使样式只匹配当前组件的DOM节点，实现隔离。,2,web前端开发,Vue、作用域、class、编译,技术知识
+vue 中怎么实现样式隔离？,使用scoped关键字、CSS Modules、深度选择器、独立样式文件，避免组件间样式互相干扰。,3,web前端开发,Vue、作用域、模板字符串、模块化,技术知识
+created 和 mounted 有什么区别？,created在实例创建完成、数据初始化后执行，此时DOM未生成；mounted在组件挂载到页面后执行，可操作DOM。,4,web前端开发,Vue、虚拟DOM、编译,技术知识
+Vue是怎么把template模版编译成render函数的？,经过解析模板生成AST抽象语法树，优化静态节点，最后通过代码生成器将AST转为可执行的render函数字符串。,4,web前端开发,Vue、虚拟DOM、模板字符串、AST、编译,技术知识
+v-model 的原理是什么样的？,v-model是语法糖，默认绑定value属性并监听input事件，数据变化更新视图，输入变化更新数据，组件可通过model选项自定义prop和event。,2,web前端开发,Vue、数据绑定、双向绑定、v-model,技术知识
+说说 Vuex 的原理,Vuex是全局状态管理，单一状态树，通过state存储数据，mutation同步修改，action异步处理，getter派生状态，遵循单向数据流。,3,web前端开发,Vue、Redux、Vuex、响应式,技术知识
+Vue中给对象添加新属性时，界面不刷新怎么办？,Vue2无法监听新增属性，使用this.$set添加响应式属性，或直接替换新对象，Vue3基于Proxy则无此问题。,2,web前端开发,Vue、Object.defineProperty、Proxy、响应式,技术知识
+Vue3有了解过吗？能说说跟Vue2的区别吗？,Vue3使用Proxy响应式、Composition API、按需引入、更小体积、更快渲染、支持Fragment、Teleport、Suspense，整体设计更现代化。,3,web前端开发,Vue、Composition API、Tree Shaking、作用域,技术知识
+自定义指令是什么？有哪些应用场景？,自定义指令用于对DOM进行底层操作，常用于防抖、拖拽、权限、复制、焦点管理等场景，扩展组件能力。,2,web前端开发,Vue、DOM,技术知识
+说说vue中，key的原理,key用于标识虚拟DOM节点，帮助diff算法快速识别相同节点，实现节点复用与移动，提升更新效率，避免列表渲染错乱。,2,web前端开发,Vue、排序、DOM,技术知识
+Vue常用的修饰符有哪些？分别有什么应用场景？,常用修饰符有.stop阻止冒泡、.prevent阻止默认行为、.sync双向绑定、.trim去空格、.number转数字、.lazy延迟同步，简化事件与输入处理。,2,web前端开发,Vue、事件冒泡、v-model、DOM,技术知识
+vue 的响应式开发比命令式有哪些优势？,响应式关注数据状态，无需手动操作DOM，代码更简洁、可维护性更强、减少冗余操作，降低出错概率，提升开发效率。,5,web前端开发,Vue、懒加载、响应式、DOM,技术知识
+vue 中 $route 和 $router 有什么区别？,$route是当前路由信息对象，包含path、query、params等；$router是路由实例，用于编程式导航、添加路由等操作。,2,web前端开发,Vue、Vue Router,技术知识
+React 和 Vue 在技术层面有哪些区别？,React使用JSX、单向数据流、手动优化、Fiber架构；Vue使用模板、双向绑定、自动响应式更新，API更简洁，上手更快。,5,web前端开发,Vue、数据绑定、Redux、Vuex,技术知识
+单页应用如何提高加载速度？,通过代码分割、懒加载、资源压缩、缓存策略、图片优化、CDN、SSR、预加载等方式全面提升加载与渲染速度。,5,web前端开发,Vue、CDN、懒加载、预加载,技术知识
+为什么Vue中的v-if和v-for不建议一起用？,v-for优先级高于v-if，会先循环再判断，造成性能浪费，应使用computed过滤数据，或把v-if提到外层容器。,2,web前端开发,Vue、computed、DOM、编译,技术知识
+vue3中怎么设置全局变量？,通过app.config.globalProperties挂载全局属性，或使用provide/inject、全局mixin，在组件中通过getCurrentInstance获取。,2,web前端开发,Vue、响应式、Ref、this,技术知识
+刷新浏览器后，Vuex的数据是否存在？如何解决？,刷新后Vuex数据会丢失，可通过localStorage/sessionStorage、vuex-persistedstate插件持久化存储，刷新后重新恢复状态。,2,web前端开发,Vue、localStorage、Vuex,技术知识
+vue路由中，history和hash两种模式有什么区别？,hash模式带#，无需服务端配置；history模式路径干净，需服务端配置兜底指向index.html，否则刷新出现404。,2,web前端开发,Vue、Nginx、哈希,技术知识
+VNode 有哪些属性？,VNode包含tag、data、children、text、elm、context、key、isStatic等属性，用于描述虚拟DOM节点信息。,2,web前端开发,Vue、Context、Hooks、响应式,技术知识
+react 和 vue 有什么区别？,React推崇函数式与JSX，手动优化，更新粒度粗；Vue使用模板与响应式，自动追踪依赖，更新更精准，上手更简单。,2,web前端开发,Vue、Virtual DOM、watch、响应式,技术知识
+computed怎么实现的缓存？,computed基于响应式依赖缓存，内部维护dirty标记，依赖不变时dirty为false，直接返回缓存值，依赖变化才重新计算。,2,web前端开发,Vue、Object.defineProperty、computed、watch、缓存,技术知识
+vue-loader做了哪些事情？,vue-loader解析单文件组件，将template、script、style分别编译处理，热更新、样式提取、代码压缩，支持组件模块化。,4,web前端开发,Vue、Webpack,技术知识
+Vue 中，假设 data 中有一个数组对象，修改数组元素时，是否会触发视图更新？,Vue2直接修改索引不会触发，需用splice或$set；Vue3基于Proxy可直接触发，修改数组元素能正常更新视图。,2,web前端开发,Vue、Object.defineProperty、watch、接口,技术知识
+Vuex有几种属性，它们存在的意义分别是什么？,Vuex包含state存储状态、getters派生状态、mutations同步修改、actions异步处理、modules模块化拆分，实现规范的全局状态管理。,2,web前端开发,Vue、Vuex、computed、模块化,技术知识
+Vuex 是什么？,Vuex是Vue官方的全局状态管理库，用于集中管理跨组件共享状态，遵循单向数据流，便于调试与维护大型应用。,2,web前端开发,Vue、Vuex,技术知识
+谈谈你对Vue中keep-alive的理解,keep-alive缓存组件实例，避免重复渲染销毁，提升页面切换性能，提供activated钩子，适合需要保留状态的组件。,3,web前端开发,Vue、正则表达式、keep-alive、DOM,技术知识
+什么是虚拟DOM？,虚拟DOM是用JavaScript对象模拟真实DOM的层级结构，通过diff算法比对差异，最小化操作真实DOM，提升渲染性能。,3,web前端开发,Vue、虚拟DOM,技术知识
+说说你对vue的理解？,Vue是轻量级、渐进式前端框架，基于数据响应式与组件化开发，简洁高效，生态完善，适合快速构建中大型项目。,2,web前端开发,Vue、Virtual DOM、watch、响应式,技术知识
