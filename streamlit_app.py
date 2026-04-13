@@ -1,4 +1,5 @@
 import os
+import urllib.parse
 from typing import List, Dict
 
 import streamlit as st
@@ -8,11 +9,10 @@ from jobmatch_ai.llm import LLMConfig, complete
 from jobmatch_ai.prompts import build_system_prompt
 from jobmatch_ai.resume_parser import analyze_resume
 from jobmatch_ai.interview_flow import InterviewState, build_chat
-from jobmatch_ai.evaluation import generate_evaluation
+from jobmatch_ai.evaluation import generate_comprehensive_evaluation
 from jobmatch_ai.sandbox import run_code_snippet
 from jobmatch_ai.question_bank import QuestionBank, extract_tech_stack
 from jobmatch_ai.translator import get_translator, translate_text
-import streamlit.components.v1 as components
 
 load_dotenv()
 st.set_page_config(page_title="JobMatch AI", layout="wide")
@@ -147,7 +147,7 @@ def init_state() -> None:
     if "evaluation" not in st.session_state:
         st.session_state.evaluation = None
     if "language" not in st.session_state:
-        st.session_state.language = "en"
+        st.session_state.language = "zh"
     if "question_bank" not in st.session_state:
         st.session_state.question_bank = QuestionBank()
     if "tech_stack" not in st.session_state:
@@ -309,7 +309,7 @@ def candidate_reply(user_text: str) -> None:
 def evaluation_section(cfg: LLMConfig) -> None:
     if st.button(get_text("generate_report")):
         with st.spinner(get_text("scoring")):
-            st.session_state.evaluation = generate_evaluation(cfg, st.session_state.transcript)
+            st.session_state.evaluation = generate_comprehensive_evaluation(cfg, st.session_state.transcript)
     if st.session_state.evaluation:
         st.markdown(st.session_state.evaluation)
 
@@ -344,7 +344,7 @@ def main() -> None:
                 else:
                     questions = st.session_state.original_questions
                 st.session_state.interview_questions = questions
-                st.session_state.interview_state.set_questions(questions)
+                st.session_state.interview_state.set_questions(questions, language=st.session_state.language)
             if st.session_state.system_prompt:
                 st.session_state.system_prompt = build_system_prompt(
                     persona=persona,
@@ -383,6 +383,7 @@ def main() -> None:
         def voice_recorder_section() -> None:
                 with st.expander(get_text("voice_input"), expanded=False):
                     st.caption(get_text("voice_hint"))
+                    speech_lang = "zh-CN" if st.session_state.language == "zh" else "en-US"
                     js = """
 <div style="font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
 <style>
@@ -406,14 +407,14 @@ def main() -> None:
     <div id="status" class="status">Tap microphone to speak</div>
     <textarea id="transcript" class="transcript" rows="3" placeholder="Transcript will appear here..."></textarea>
     <div class="controls">
-        <button id="insertBtn" class="ctrl primary">Insert</button>
+        <button id="copyBtn" class="ctrl primary">Copy</button>
         <button id="clearBtn" class="ctrl">Clear</button>
     </div>
 </div>
 
 <script>
     const recBtn = document.getElementById('recBtn');
-    const insertBtn = document.getElementById('insertBtn');
+    const copyBtn = document.getElementById('copyBtn');
     const clearBtn = document.getElementById('clearBtn');
     const status = document.getElementById('status');
     const transcriptEl = document.getElementById('transcript');
@@ -431,7 +432,7 @@ def main() -> None:
         recognition = new SpeechRecognition();
         recognition.interimResults = true;
         recognition.continuous = true;
-        recognition.lang = 'en-US';
+        recognition.lang = '__SPEECH_LANG__';
 
         recognition.onstart = () => { status.innerText = 'Listening…'; recBtn.classList.add('recording'); }
         recognition.onend = () => { status.innerText = 'Stopped'; recBtn.classList.remove('recording'); isRecording = false; }
@@ -463,33 +464,20 @@ def main() -> None:
 
     clearBtn.onclick = () => { finalTranscript=''; transcriptEl.value=''; status.innerText='Cleared'; };
 
-    insertBtn.onclick = () => {
+    copyBtn.onclick = () => {
         const text = transcriptEl.value.trim();
-        if (!text) { status.innerText = 'Nothing to insert.'; return; }
-        const labels = Array.from(document.querySelectorAll('label'));
-        let targetInput = null;
-        for (const lbl of labels) {
-            if (lbl.innerText && lbl.innerText.trim().startsWith('Your reply')) {
-                const forId = lbl.getAttribute('for');
-                if (forId) { const el = document.getElementById(forId); if (el) { targetInput = el; break; } }
-                let sibling = lbl.nextElementSibling;
-                if (sibling && (sibling.tagName==='INPUT' || sibling.tagName==='TEXTAREA')) { targetInput = sibling; break; }
-            }
-        }
-        if (!targetInput) { targetInput = document.querySelector('input[type=text], textarea'); }
-        if (targetInput) {
-            targetInput.value = text;
-            targetInput.dispatchEvent(new Event('input', { bubbles: true }));
-            status.innerText = 'Inserted transcript.';
-        } else {
-            status.innerText = 'Reply input not found; copy-paste instead.';
-        }
+        if (!text) { status.innerText = 'Nothing to copy.'; return; }
+        transcriptEl.select();
+        document.execCommand('copy');
+        status.innerText = 'Copied to clipboard. Paste into the reply input.';
     };
 </script>
 </div>
 """
 
-                    components.html(js, height=220)
+                js = js.replace('__SPEECH_LANG__', speech_lang)
+                src = "data:text/html;charset=utf-8," + urllib.parse.quote(js)
+                st.iframe(src, height=260)
 
         voice_recorder_section()
 

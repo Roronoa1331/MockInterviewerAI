@@ -1,3 +1,4 @@
+import re
 from typing import Dict, List
 
 # Simple translation cache for common terms
@@ -22,23 +23,26 @@ class QuestionTranslator:
         self._init_translator()
     
     def _init_translator(self):
-        """Initialize translator - try google-trans-new first, fallback to deep-translator."""
+        """Initialize translator - prefer deep-translator, fallback to google-trans-new."""
         try:
-            from google_trans_new import google_translator
-            self.translator_name = "google_trans_new"
-            self.translator = google_translator()
+            from deep_translator import GoogleTranslator
+            self.translator_name = "deep_translator"
+            self.translator_cls = GoogleTranslator
         except ImportError:
             try:
-                from deep_translator import GoogleTranslator
-                self.translator_name = "deep_translator"
-                self.translator_cls = GoogleTranslator
+                from google_trans_new import google_translator
+                self.translator_name = "google_trans_new"
+                self.translator = google_translator()
             except ImportError:
-                print("Warning: Translation library not available. Install 'google-trans-new' or 'deep-translator' for automatic translation.")
+                print("Warning: Translation library not available. Install 'deep-translator' or 'google-trans-new' for automatic translation.")
                 self.translator_name = None
     
     def translate(self, text: str, target_language: str = "en") -> str:
         """Translate text to the target language."""
         if not text or self.translator_name is None:
+            return text
+
+        if self._should_skip_translation(text, target_language):
             return text
         
         cache_key = (text, target_language)
@@ -46,18 +50,25 @@ class QuestionTranslator:
             return self.cache[cache_key]
         
         try:
-            if self.translator_name == "google_trans_new":
-                translated = self.translator.translate(text, lang_tgt=target_language)
-            elif self.translator_name == "deep_translator":
+            if self.translator_name == "deep_translator":
                 translator = self.translator_cls(source="auto", target=target_language)
                 translated = translator.translate(text)
+            elif self.translator_name == "google_trans_new":
+                translated = self.translator.translate(text, lang_tgt=target_language)
             else:
                 translated = text
         except Exception as e:
-            print(f"Translation error for '{text}': {e}")
+            print(f"Translation error ({target_language}): {e}")
             translated = text
         self.cache[cache_key] = translated
         return translated
+
+    def _should_skip_translation(self, text: str, target_language: str) -> bool:
+        if target_language.startswith("en"):
+            return not bool(re.search(r"[\u4e00-\u9fff]", text))
+        if target_language.startswith("zh"):
+            return bool(re.search(r"[\u4e00-\u9fff]", text))
+        return False
     
     def translate_question_dict(self, question: Dict, target_language: str = "en") -> Dict:
         """Translate question dictionary fields."""

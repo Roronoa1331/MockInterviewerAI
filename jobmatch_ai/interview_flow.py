@@ -60,10 +60,12 @@ class InterviewState:
         
         return "Ask a technical question. Prefer resume-grounded for the first 2-3."
     
-    def set_questions(self, questions: List[Dict]) -> None:
+    def set_questions(self, questions: List[Dict], language: Optional[str] = None) -> None:
         """Set available questions for this interview session."""
         self.available_questions = questions
         self.used_questions = set()
+        if language:
+            self.language = language
 
 
 def build_chat(system_prompt: str, history: List[Dict[str, str]]) -> List[Dict[str, str]]:
