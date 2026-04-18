@@ -1,18 +1,23 @@
 import os
 import urllib.parse
 from typing import List, Dict
+from datetime import date, timedelta
+import random
+import re
 
 import streamlit as st
 from dotenv import load_dotenv
+import altair as alt
 
 from jobmatch_ai.llm import LLMConfig, complete
 from jobmatch_ai.prompts import build_system_prompt
 from jobmatch_ai.resume_parser import analyze_resume
 from jobmatch_ai.interview_flow import InterviewState, build_chat
-from jobmatch_ai.evaluation import generate_comprehensive_evaluation
+from jobmatch_ai.evaluation import generate_comprehensive_evaluation, generate_evaluation
 from jobmatch_ai.sandbox import run_code_snippet
 from jobmatch_ai.question_bank import QuestionBank, extract_tech_stack
 from jobmatch_ai.translator import get_translator, translate_text
+from jobmatch_ai import db
 
 load_dotenv()
 st.set_page_config(page_title="JobMatch AI", layout="wide")
@@ -44,7 +49,6 @@ TRANSLATIONS = {
         "model_backend": "Model Backend",
         "backend": "Backend",
         "model_name": "Model name",
-        "using_local": "Using local Hugging Face model. First run will download the model.",
         "openai_key": "OPENAI_API_KEY",
         "deepseek_key": "DEEPSEEK_API_KEY",
         "deepseek_url": "DeepSeek base URL",
@@ -94,7 +98,6 @@ TRANSLATIONS = {
         "model_backend": "模型后端",
         "backend": "后端",
         "model_name": "模型名称",
-        "using_local": "使用本地 Hugging Face 模型。首次运行将从 Hugging Face 下载模型。",
         "openai_key": "OPENAI_API_KEY",
         "deepseek_key": "DEEPSEEK_API_KEY",
         "deepseek_url": "DeepSeek 基础 URL",
@@ -156,14 +159,104 @@ def init_state() -> None:
         st.session_state.interview_questions = []
     if "original_questions" not in st.session_state:
         st.session_state.original_questions = []
+    if "auth" not in st.session_state:
+        st.session_state.auth = {"user": None, "access_token": None}
+    if "active_interview_id" not in st.session_state:
+        st.session_state.active_interview_id = None
+    if "page" not in st.session_state:
+        st.session_state.page = "app"  # "app" | "auth" | "stats"
+    if "score_saved_for_interview" not in st.session_state:
+        st.session_state.score_saved_for_interview = {}  # interview_id -> bool
+
+
+def top_nav() -> None:
+    access_token = st.session_state.auth.get("access_token")
+    user = st.session_state.auth.get("user")
+    right = st.columns([6, 1, 1, 1])
+    with right[2]:
+        if st.button("📊", key="nav_stats", help="Statistics"):
+            st.session_state.page = "stats"
+            st.rerun()
+    with right[3]:
+        if access_token:
+            if st.button("Sign out", key="nav_signout"):
+                st.session_state.auth = {"user": None, "access_token": None}
+                st.session_state.active_interview_id = None
+                st.session_state.page = "app"
+                st.rerun()
+        else:
+            if st.button("Log in / Sign up", key="nav_auth"):
+                st.session_state.page = "auth"
+                st.rerun()
+
+    if access_token:
+        email = getattr(user, "email", "") or ""
+        st.caption(f"Signed in: {email}")
+    else:
+        st.info("Guest mode — log in to save data and view statistics.")
+
+
+def auth_page() -> None:
+    st.subheader("Account")
+    access_token = st.session_state.auth.get("access_token")
+    if access_token:
+        st.success("You are already signed in.")
+        if st.button("Back to app", key="auth_back_signed_in"):
+            st.session_state.page = "app"
+            st.rerun()
+        return
+
+    tab_login, tab_signup = st.tabs(["Log in", "Sign up"])
+    with tab_login:
+        email = st.text_input("Email", key="login_email")
+        password = st.text_input("Password", type="password", key="login_password")
+        cols = st.columns([1, 1, 3])
+        with cols[0]:
+            if st.button("Log in", key="login_btn"):
+                try:
+                    res = db.sign_in(email=email.strip(), password=password)
+                    sess = res["session"]
+                    st.session_state.auth = {
+                        "user": res["user"],
+                        "access_token": sess.access_token if sess else None,
+                    }
+                    st.session_state.page = "app"
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"Login failed: {e}")
+        with cols[1]:
+            if st.button("Back", key="auth_back_login"):
+                st.session_state.page = "app"
+                st.rerun()
+
+    with tab_signup:
+        email = st.text_input("Email", key="signup_email")
+        password = st.text_input("Password", type="password", key="signup_password")
+        cols = st.columns([1, 1, 3])
+        with cols[0]:
+            if st.button("Sign up", key="signup_btn"):
+                try:
+                    res = db.sign_up(email=email.strip(), password=password)
+                    sess = res["session"]
+                    st.session_state.auth = {
+                        "user": res["user"],
+                        "access_token": sess.access_token if sess else None,
+                    }
+                    st.info("Signup complete. Check your email if confirmation is enabled.")
+                    st.session_state.page = "app"
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"Signup failed: {e}")
+        with cols[1]:
+            if st.button("Back", key="auth_back_signup"):
+                st.session_state.page = "app"
+                st.rerun()
 
 
 def sidebar_config() -> LLMConfig:
     st.sidebar.header(get_text("model_backend"))
-    backend = st.sidebar.selectbox(get_text("backend"), ["transformers", "openai", "deepseek", "gemini", "ollama"], index=0)
-    if backend == "transformers":
-        default_model = "Qwen/Qwen2.5-3B-Instruct"
-    elif backend == "openai":
+    backend = st.sidebar.selectbox(get_text("backend"), ["openai", "deepseek", "gemini", "ollama"], index=2)
+    if backend == "openai":
         default_model = "gpt-4o-mini"
     elif backend == "deepseek":
         default_model = "deepseek-chat"
@@ -175,9 +268,7 @@ def sidebar_config() -> LLMConfig:
     model = st.sidebar.text_input(get_text("model_name"), value=default_model)
     base_url = None
     api_key = None
-    if backend == "transformers":
-        st.sidebar.info(get_text("using_local"))
-    elif backend == "openai":
+    if backend == "openai":
         api_key = st.sidebar.text_input(
             get_text("openai_key"),
             value="",  # do not prefill from env to avoid accidental display
@@ -284,6 +375,21 @@ def start_interview(cfg: LLMConfig, persona: str) -> None:
         language=st.session_state.language,
     )
     st.session_state.evaluation = None
+    st.session_state.active_interview_id = None
+    access_token = st.session_state.auth.get("access_token")
+    if access_token:
+        try:
+            st.session_state.active_interview_id = db.create_interview(
+                access_token,
+                meta={
+                    "language": st.session_state.language,
+                    "tech_stack": tech_stack,
+                    "candidate_name": st.session_state.candidate_name,
+                },
+            )
+        except Exception:
+            # If DB isn't configured, the interview can still run locally in session state.
+            st.session_state.active_interview_id = None
     st.success(get_text("interview_initialized"))
 
 
@@ -299,17 +405,79 @@ def interviewer_turn(cfg: LLMConfig) -> None:
     reply = complete(cfg, messages)
     st.session_state.history.append({"role": "assistant", "content": reply})
     st.session_state.transcript.append({"role": "assistant", "content": reply})
+    st.session_state.interview_state.register_interviewer_question(reply)
+    access_token = st.session_state.auth.get("access_token")
+    interview_id = st.session_state.active_interview_id
+    if access_token and interview_id:
+        try:
+            db.add_message(access_token, interview_id, role="assistant", content=reply)
+        except Exception:
+            pass
+
+    # Auto-save a score when the interview concludes.
+    if (
+        directive.strip().lower().startswith("politely conclude the interview")
+        and access_token
+        and interview_id
+        and not st.session_state.score_saved_for_interview.get(interview_id)
+    ):
+        try:
+            quick_eval = generate_evaluation(cfg, st.session_state.transcript)
+            score = _extract_overall_score(quick_eval or "")
+            if score is not None:
+                db.set_interview_score(access_token, interview_id, score)
+                st.session_state.score_saved_for_interview[interview_id] = True
+        except Exception:
+            # Don't block UX if scoring fails; user can still generate report manually.
+            pass
 
 
 def candidate_reply(user_text: str) -> None:
     st.session_state.history.append({"role": "user", "content": user_text})
     st.session_state.transcript.append({"role": "user", "content": user_text})
+    st.session_state.interview_state.register_candidate_reply(user_text)
+    access_token = st.session_state.auth.get("access_token")
+    interview_id = st.session_state.active_interview_id
+    if access_token and interview_id:
+        try:
+            db.add_message(access_token, interview_id, role="user", content=user_text)
+        except Exception:
+            pass
+
+
+def _extract_overall_score(md: str) -> int | None:
+    # Handles e.g. "## Overall Score: 83.1/100" or "Overall Score: 83/100"
+    m = re.search(r"Overall\s+Score\s*:\s*([0-9]+(?:\.[0-9]+)?)\s*/\s*100", md, flags=re.IGNORECASE)
+    if not m:
+        m = re.search(r"\bScore\s*:\s*([0-9]+(?:\.[0-9]+)?)\s*/\s*100\b", md, flags=re.IGNORECASE)
+    if not m:
+        # Handles "Score: 78" / "SCORE: 78"
+        m = re.search(r"^\s*Score\s*:\s*([0-9]+(?:\.[0-9]+)?)\s*$", md, flags=re.IGNORECASE | re.MULTILINE)
+    if not m:
+        # Handles "## Overall Score: 83.1" (without /100)
+        m = re.search(r"Overall\s+Score\s*:\s*([0-9]+(?:\.[0-9]+)?)\b", md, flags=re.IGNORECASE)
+    if not m:
+        return None
+    try:
+        val = float(m.group(1))
+    except ValueError:
+        return None
+    val = max(0.0, min(100.0, val))
+    return int(round(val))
 
 
 def evaluation_section(cfg: LLMConfig) -> None:
     if st.button(get_text("generate_report")):
         with st.spinner(get_text("scoring")):
             st.session_state.evaluation = generate_comprehensive_evaluation(cfg, st.session_state.transcript)
+            score = _extract_overall_score(st.session_state.evaluation or "")
+            access_token = st.session_state.auth.get("access_token")
+            interview_id = st.session_state.active_interview_id
+            if score is not None and access_token and interview_id:
+                try:
+                    db.set_interview_score(access_token, interview_id, score)
+                except Exception:
+                    pass
     if st.session_state.evaluation:
         st.markdown(st.session_state.evaluation)
 
@@ -327,6 +495,196 @@ def sandbox_section() -> None:
         else:
             st.success(get_text("success_no_error"))
 
+def _format_int(n: int) -> str:
+    return f"{n:,}"
+
+
+def _demo_daily_counts(days: int, intensity: float, seed: int) -> List[Dict]:
+    rng = random.Random(seed)
+    today = date.today()
+    data: List[Dict] = []
+    base = max(2.0, intensity * 22.0)
+    for i in range(days):
+        d = today - timedelta(days=(days - 1 - i))
+        # Weekly seasonality + noise
+        weekly = 0.65 + 0.35 * (1.0 if d.weekday() in (1, 2, 3) else 0.6)
+        noise = rng.uniform(0.55, 1.45)
+        count = int(round(base * weekly * noise))
+        # occasional "no usage" days
+        if rng.random() < (0.08 if intensity > 0.35 else 0.14):
+            count = 0
+        data.append({"day": d.isoformat(), "count": count})
+    return data
+
+
+def stats_section() -> None:
+    access_token = st.session_state.auth.get("access_token")
+    if not access_token:
+        st.info("Guest mode: this is a demo preview. Log in to see your real saved statistics.")
+
+        with st.container(border=True):
+            c1, c2, c3, c4 = st.columns([2, 2, 2, 2])
+            with c1:
+                days = st.selectbox("Time range", [7, 14, 30, 60, 90], index=2, key="demo_days")
+            with c2:
+                intensity = st.slider("Activity level", min_value=0.2, max_value=1.0, value=0.55, step=0.05, key="demo_intensity")
+            with c3:
+                seed = st.number_input("Demo user id", min_value=1, max_value=9999, value=42, step=1, key="demo_seed")
+            with c4:
+                show_points = st.toggle("Show points", value=True, key="demo_points")
+
+        daily = _demo_daily_counts(days=int(days), intensity=float(intensity), seed=int(seed))
+        total_messages = sum(int(r.get("count", 0) or 0) for r in daily)
+        active_days = len([r for r in daily if int(r.get("count", 0) or 0) > 0])
+        avg_per_day = int(round(total_messages / active_days)) if active_days else 0
+
+        k1, k2, k3 = st.columns(3)
+        with k1:
+            st.metric("Total saved messages (demo)", _format_int(total_messages))
+        with k2:
+            st.metric("Active days (demo)", _format_int(active_days))
+        with k3:
+            st.metric("Avg / active day (demo)", _format_int(avg_per_day))
+
+        st.markdown("#### Activity over time (demo)")
+        chart = (
+            alt.Chart(alt.Data(values=daily))
+            .mark_line(point=show_points)
+            .encode(
+                x=alt.X("day:T", title="Day"),
+                y=alt.Y("count:Q", title="Messages saved"),
+                tooltip=["day:T", "count:Q"],
+            )
+            .properties(height=260)
+        )
+        st.altair_chart(chart, use_container_width=True)
+
+        st.markdown("#### Score over time (demo)")
+        # Demo score series: loosely correlated with activity level
+        demo_scores = []
+        base_score = 55 + int(intensity * 35)
+        rng = random.Random(int(seed) + 999)
+        for r in daily:
+            if int(r["count"]) == 0:
+                continue
+            drift = rng.uniform(-5, 6)
+            base_score = max(40, min(95, base_score + (0.3 if intensity > 0.5 else 0.15) + drift * 0.08))
+            demo_scores.append({"day": r["day"], "score": round(base_score, 1)})
+
+        if demo_scores:
+            first = float(demo_scores[0]["score"])
+            last = float(demo_scores[-1]["score"])
+            delta = round(last - first, 1)
+            st.metric("Overall improvement (demo)", f"{delta:+.1f}", help="Last score minus first score in the selected range.")
+            score_chart = (
+                alt.Chart(alt.Data(values=demo_scores))
+                .mark_line(point=True)
+                .encode(
+                    x=alt.X("day:T", title="Day"),
+                    y=alt.Y("score:Q", title="Overall score (0–100)", scale=alt.Scale(domain=[0, 100])),
+                    tooltip=["day:T", "score:Q"],
+                )
+                .properties(height=240)
+            )
+            st.altair_chart(score_chart, use_container_width=True)
+        return
+
+    with st.expander("Demo (logged-in)", expanded=False):
+        st.caption("This will create demo interviews + improving scores in your cloud account for testing charts.")
+        c1, c2, c3, c4 = st.columns([2, 2, 2, 2])
+        with c1:
+            demo_days = st.selectbox("Range (days)", [30, 45, 60, 90], index=1, key="seed_days")
+        with c2:
+            demo_interviews = st.selectbox("Interviews", [5, 8, 10, 15], index=2, key="seed_interviews")
+        with c3:
+            start_score = st.slider("Start score", 30, 90, 55, 1, key="seed_start")
+        with c4:
+            end_score = st.slider("End score", 30, 100, 84, 1, key="seed_end")
+        seed_val = st.number_input("Seed", min_value=1, max_value=9999, value=42, step=1, key="seed_val")
+        if st.button("Generate demo history in my account", key="seed_btn"):
+            try:
+                db.seed_demo_history(
+                    access_token,
+                    days=int(demo_days),
+                    interviews=int(demo_interviews),
+                    start_score=int(start_score),
+                    end_score=int(end_score),
+                    seed=int(seed_val),
+                )
+                st.success("Demo history created. Refreshing charts…")
+                st.rerun()
+            except Exception as e:
+                st.error(f"Failed to seed demo data: {e}")
+    try:
+        daily = db.stats_daily_counts(access_token)
+    except Exception as e:
+        st.warning(f"Stats unavailable: {e}")
+        return
+    if not daily:
+        st.info("No saved data yet. Start an interview while logged in.")
+        return
+
+    total_messages = sum(int(r.get("count", 0) or 0) for r in daily)
+    active_days = len([r for r in daily if int(r.get("count", 0) or 0) > 0])
+    avg_per_day = int(round(total_messages / active_days)) if active_days else 0
+
+    k1, k2, k3 = st.columns(3)
+    with k1:
+        st.metric("Total saved messages", _format_int(total_messages))
+    with k2:
+        st.metric("Active days", _format_int(active_days))
+    with k3:
+        st.metric("Avg / active day", _format_int(avg_per_day))
+
+    st.markdown("#### Activity over time")
+    chart = (
+        alt.Chart(alt.Data(values=daily))
+        .mark_line(point=True)
+        .encode(
+            x=alt.X("day:T", title="Day"),
+            y=alt.Y("count:Q", title="Messages saved"),
+            tooltip=["day:T", "count:Q"],
+        )
+        .properties(height=240)
+    )
+    st.altair_chart(chart, use_container_width=True)
+
+    st.markdown("#### Score over time")
+    try:
+        scores = db.list_scores(access_token)
+    except Exception:
+        scores = []
+
+    if not scores:
+        st.info("No scores saved yet. Finish an interview (auto-saves score at conclusion) or generate an evaluation report.")
+        return
+
+    # Convert to day-level average in Python (keeps DB simple)
+    by_day: Dict[str, List[float]] = {}
+    for r in scores:
+        created_at = str(r.get("created_at", ""))[:10]
+        s = r.get("score", None)
+        if s is None:
+            continue
+        by_day.setdefault(created_at, []).append(float(s))
+    score_daily = [{"day": d, "avg_score": round(sum(v) / len(v), 1), "n": len(v)} for d, v in sorted(by_day.items())]
+
+    first = float(score_daily[0]["avg_score"])
+    last = float(score_daily[-1]["avg_score"])
+    delta = round(last - first, 1)
+    st.metric("Overall improvement", f"{delta:+.1f}", help="Last daily average score minus first daily average score.")
+
+    score_chart = (
+        alt.Chart(alt.Data(values=score_daily))
+        .mark_line(point=True)
+        .encode(
+            x=alt.X("day:T", title="Day"),
+            y=alt.Y("avg_score:Q", title="Avg overall score (0–100)", scale=alt.Scale(domain=[0, 100])),
+            tooltip=["day:T", "avg_score:Q", "n:Q"],
+        )
+        .properties(height=240)
+    )
+    st.altair_chart(score_chart, use_container_width=True)
 
 def main() -> None:
     init_state()
@@ -357,6 +715,24 @@ def main() -> None:
 
     st.title(get_text("title"))
     st.write(get_text("subtitle"))
+    top_nav()
+
+    if st.session_state.page == "auth":
+        auth_page()
+        return
+    if st.session_state.page == "stats":
+        header_left, header_right = st.columns([6, 1])
+        with header_left:
+            st.subheader("Statistics")
+            st.caption("Your interview activity saved to the cloud.")
+        with header_right:
+            if st.button("Back", key="stats_back"):
+                st.session_state.page = "app"
+                st.rerun()
+
+        st.divider()
+        stats_section()
+        return
 
     resume_section()
 
@@ -381,7 +757,7 @@ def main() -> None:
 
         # Voice recorder component: records speech and inserts transcript into the reply input
         def voice_recorder_section() -> None:
-                with st.expander(get_text("voice_input"), expanded=False):
+                if st.toggle(get_text("voice_input")):
                     st.caption(get_text("voice_hint"))
                     speech_lang = "zh-CN" if st.session_state.language == "zh" else "en-US"
                     js = """
@@ -475,9 +851,9 @@ def main() -> None:
 </div>
 """
 
-                js = js.replace('__SPEECH_LANG__', speech_lang)
-                src = "data:text/html;charset=utf-8," + urllib.parse.quote(js)
-                st.iframe(src, height=260)
+                    js = js.replace('__SPEECH_LANG__', speech_lang)
+                    src = "data:text/html;charset=utf-8," + urllib.parse.quote(js)
+                    st.components.v1.iframe(src, height=260)
 
         voice_recorder_section()
 

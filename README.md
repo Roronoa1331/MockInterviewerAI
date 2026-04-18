@@ -6,7 +6,7 @@ JobMatch AI is a Streamlit-based mock interviewer that ingests a candidate’s r
 https://jobmatchai-roroma.streamlit.app/
 
 ## Features
-- **Default local model**: Uses Hugging Face transformers (GAD-GPT-5-Chat) by default—no API key needed.
+- Configurable model backend (OpenAI, DeepSeek, Gemini, or Ollama) via environment variables.
 - Persona-driven interviewer prompt with conversation memory.
 - Resume upload (PDF or text) with tech stack summary and project-aware question seeding.
 - Structured interview flow: intro, technical deep dive, behavioral, polite conclusion.
@@ -20,19 +20,24 @@ https://jobmatchai-roroma.streamlit.app/
 pip install -r requirements.txt
 ```
 2) Configure secrets in a `.env` file (keep it out of git; see `.env.example`):
-- **Transformers (default)**: No API key needed; downloads model from Hugging Face on first run.
 - OpenAI: set `OPENAI_API_KEY`.
 - DeepSeek: set `DEEPSEEK_API_KEY` (optionally `DEEPSEEK_BASE_URL`, default https://api.deepseek.com).
 - Google Gemini: set `GEMINI_API_KEY` from Google AI Studio (optionally `GEMINI_BASE_URL`).
 - Ollama: run `ollama serve` and optionally set `OLLAMA_BASE_URL` (defaults to http://localhost:11434).
+3) (Optional but recommended) Enable hosted accounts + database (NOT local):
+   - Create a free Supabase project.
+   - In Supabase SQL Editor, run the schema in `supabase_schema.sql`.
+   - In `.env`, set:
+     - `SUPABASE_URL`
+     - `SUPABASE_ANON_KEY`
 3) Run the app:
 ```
 python -m streamlit run streamlit_app.py
 ```
 
 ## Configuration
-- `MODEL_BACKEND`: `transformers` (default), `openai`, `deepseek`, `gemini`, or `ollama`.
-- `MODEL_NAME`: e.g., `Qwen/Qwen2.5-3B-Instruct` (default), `gpt-4o-mini`, `deepseek-chat`, `gemini-1.5-flash-latest`, or `llama3`.
+- `MODEL_BACKEND`: `openai`, `deepseek`, `gemini`, or `ollama`.
+- `MODEL_NAME`: e.g., `gpt-4o-mini`, `deepseek-chat`, `gemini-1.5-flash-latest`, or `llama3`.
 - `SYSTEM_PERSONA`: optional override for the interviewer persona prompt.
 - `OPENAI_API_KEY`, `DEEPSEEK_API_KEY`, `GEMINI_API_KEY`, or `OLLAMA_BASE_URL`: set in `.env` for local dev.
 
@@ -50,3 +55,7 @@ python -m streamlit run streamlit_app.py
 - Keep interviews short for demos to control token usage.
 - Do not run untrusted code outside the provided sandbox helper.
 - For grading, ensure a short demo video records a full interview session.
+
+## What’s new
+- Follow-up questioning: after every candidate answer, the next interviewer turn asks exactly one targeted follow-up before moving on.
+- Accounts + persistence: when logged in, interviews/messages are stored in Supabase (cloud Postgres) and a simple stats chart is shown.
