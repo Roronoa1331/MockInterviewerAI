@@ -6,8 +6,13 @@ import random
 import re
 
 import streamlit as st
-from dotenv import load_dotenv
 import altair as alt
+
+try:
+    from dotenv import load_dotenv  # type: ignore
+except Exception:  # pragma: no cover
+    def load_dotenv() -> bool:  # type: ignore
+        return False
 
 from jobmatch_ai.llm import LLMConfig, complete
 from jobmatch_ai.prompts import build_system_prompt

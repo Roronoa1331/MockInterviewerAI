@@ -1,9 +1,14 @@
 import os
 from typing import List, Dict, Optional
 
-from dotenv import load_dotenv
 from openai import OpenAI, OpenAIError
 from pydantic import BaseModel
+
+try:
+    from dotenv import load_dotenv  # type: ignore
+except Exception:  # pragma: no cover
+    def load_dotenv() -> bool:  # type: ignore
+        return False
 
 
 load_dotenv()
