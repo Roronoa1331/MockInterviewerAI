@@ -13,6 +13,15 @@ class DBConfigError(RuntimeError):
 def _get_supabase() -> Client:
     url = os.getenv("SUPABASE_URL")
     key = os.getenv("SUPABASE_ANON_KEY")
+    if (not url or not key) and os.getenv("STREAMLIT_SERVER_RUNNING"):
+        # Streamlit Cloud typically uses Secrets, not .env files.
+        try:
+            import streamlit as st  # type: ignore
+
+            url = url or st.secrets.get("SUPABASE_URL")
+            key = key or st.secrets.get("SUPABASE_ANON_KEY")
+        except Exception:
+            pass
     if not url or not key:
         raise DBConfigError("Missing SUPABASE_URL or SUPABASE_ANON_KEY")
     return create_client(url, key)
