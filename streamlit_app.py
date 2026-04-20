@@ -172,6 +172,9 @@ def init_state() -> None:
         st.session_state.page = "app"  # "app" | "auth" | "stats"
     if "score_saved_for_interview" not in st.session_state:
         st.session_state.score_saved_for_interview = {}  # interview_id -> bool
+    if "last_retrieval" not in st.session_state:
+        # {"query": str, "results": list[dict], "source": str}
+        st.session_state.last_retrieval = None
 
 
 def top_nav() -> None:
@@ -371,7 +374,23 @@ def start_interview(cfg: LLMConfig, persona: str) -> None:
     
     st.session_state.history = []
     st.session_state.transcript = []
-    st.session_state.interview_state = InterviewState(tech_stack=tech_stack, available_questions=questions, language=st.session_state.language)
+    st.session_state.last_retrieval = None
+    interview_state = InterviewState(
+        tech_stack=tech_stack,
+        available_questions=questions,
+        language=st.session_state.language,
+    )
+
+    # 注入检索回调，让 InterviewState 能把检索结果写入 session_state
+    def _retrieval_callback(query: str, results: list, source: str) -> None:
+        st.session_state.last_retrieval = {
+            "query": query,
+            "results": results,
+            "source": source,
+        }
+
+    interview_state._last_retrieval_callback = _retrieval_callback
+    st.session_state.interview_state = interview_state
     st.session_state.system_prompt = build_system_prompt(
         persona=persona,
         stack_summary=st.session_state.stack_summary,
@@ -474,7 +493,11 @@ def _extract_overall_score(md: str) -> int | None:
 def evaluation_section(cfg: LLMConfig) -> None:
     if st.button(get_text("generate_report")):
         with st.spinner(get_text("scoring")):
-            st.session_state.evaluation = generate_comprehensive_evaluation(cfg, st.session_state.transcript)
+            st.session_state.evaluation = generate_comprehensive_evaluation(
+                cfg,
+                st.session_state.transcript,
+                tech_stack=st.session_state.get("tech_stack", []),
+            )
             score = _extract_overall_score(st.session_state.evaluation or "")
             access_token = st.session_state.auth.get("access_token")
             interview_id = st.session_state.active_interview_id
@@ -874,6 +897,35 @@ def main() -> None:
                         st.write(f"{idx}. {translate_text(question, st.session_state.language)}")
                 if len(st.session_state.interview_questions) > 5:
                     st.write(get_text('more_questions').format(count=len(st.session_state.interview_questions) - 5))
+
+        # RAG 检索结果可视化
+        last_retrieval = st.session_state.get("last_retrieval")
+        if last_retrieval and last_retrieval.get("results"):
+            with st.expander("🔍 最近一次检索结果 (RAG Debug)", expanded=False):
+                st.caption(f"**Query**: `{last_retrieval.get('query', '')}`")
+                st.caption(f"**来源**: {last_retrieval.get('source', '')}")
+                results = last_retrieval["results"]
+                for i, item in enumerate(results[:5], 1):
+                    chunk_type = item.get("chunk_type", "")
+                    score_val = item.get("score", 0)
+                    role_label = item.get("role", "")
+                    if chunk_type == "question":
+                        q_text = item.get("question", "")
+                        a_text = item.get("answer_key_points", "")[:120]
+                        st.markdown(
+                            f"**[{i}]** `{role_label}` | `{chunk_type}` | score=`{score_val:.3f}`\n\n"
+                            f"- 📌 **题目**: {q_text}\n"
+                            f"- 💡 **答案要点**: {a_text}…"
+                        )
+                    else:
+                        title = item.get("title", item.get("topic", ""))
+                        body = item.get("answer_key_points", "")[:150]
+                        st.markdown(
+                            f"**[{i}]** `{role_label}` | `{chunk_type}` | score=`{score_val:.3f}`\n\n"
+                            f"- 📚 **主题**: {title}\n"
+                            f"- 📝 **内容摘要**: {body}…"
+                        )
+                    st.divider()
 
     if st.session_state.history:
         st.markdown(get_text("transcript"))
