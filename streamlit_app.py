@@ -2,11 +2,13 @@ import os
 import urllib.parse
 from typing import List, Dict
 from datetime import date, timedelta
+import hashlib
 import random
 import re
 
 import streamlit as st
 import altair as alt
+import plotly.graph_objects as go
 
 try:
     from dotenv import load_dotenv  # type: ignore
@@ -59,6 +61,7 @@ TRANSLATIONS = {
         "deepseek_url": "DeepSeek base URL",
         "gemini_key": "GEMINI_API_KEY",
         "gemini_url": "Gemini base URL",
+        "gemini_model_hint": "Gemini shorthand names are normalized to gemini-2.5-flash. The default is recommended.",
         "ollama_url": "Ollama base URL",
         "persona": "Interviewer persona",
         "persona_hint": "Keep persona concise. System prompt will include resume summary and projects.",
@@ -72,6 +75,13 @@ TRANSLATIONS = {
         "interviewer": "Interviewer",
         "you": "You",
         "voice_input": "Voice input (beta)",
+        "eval_radar_title": "Five-Dimension Evaluation",
+        "radar_overall_score": "Overall Score",
+        "aspect_technical_correctness": "Technical Correctness",
+        "aspect_knowledge_depth": "Knowledge Depth",
+        "aspect_logical_rigor": "Logical Rigor",
+        "aspect_position_match": "Position Match",
+        "aspect_expression_clarity": "Expression Clarity",
         "voice_hint": "Click Record, speak your reply, then click Insert into reply. Chrome recommended.",
         "detected_tech_title": "📚 Detected Tech Stack & Questions",
         "detected_technologies": "Detected Technologies:",
@@ -108,6 +118,7 @@ TRANSLATIONS = {
         "deepseek_url": "DeepSeek 基础 URL",
         "gemini_key": "GEMINI_API_KEY",
         "gemini_url": "Gemini 基础 URL",
+        "gemini_model_hint": "Gemini 简写模型会自动归一化到 gemini-2.5-flash，默认值为推荐选项。",
         "ollama_url": "Ollama 基础 URL",
         "persona": "面试官人物设定",
         "persona_hint": "保持人物设定简洁。系统提示将包括简历摘要和项目。",
@@ -121,6 +132,13 @@ TRANSLATIONS = {
         "interviewer": "面试官",
         "you": "你",
         "voice_input": "语音输入（测试版）",
+        "eval_radar_title": "五维度能力评估",
+        "radar_overall_score": "综合得分",
+        "aspect_technical_correctness": "技术正确性",
+        "aspect_knowledge_depth": "知识深度",
+        "aspect_logical_rigor": "逻辑严谨性",
+        "aspect_position_match": "岗位匹配度",
+        "aspect_expression_clarity": "表达清晰度",
         "voice_hint": "点击录音，说出你的回复，然后点击插入到回复中。推荐使用 Chrome。",
         "detected_tech_title": "📚 检测到的技术栈和问题",
         "detected_technologies": "检测到的技术：",
@@ -154,6 +172,10 @@ def init_state() -> None:
         st.session_state.candidate_name = "Candidate"
     if "evaluation" not in st.session_state:
         st.session_state.evaluation = None
+    if "evaluation_scores" not in st.session_state:
+        st.session_state.evaluation_scores = None
+    if "evaluation_translations" not in st.session_state:
+        st.session_state.evaluation_translations = None
     if "language" not in st.session_state:
         st.session_state.language = "zh"
     if "question_bank" not in st.session_state:
@@ -274,6 +296,8 @@ def sidebar_config() -> LLMConfig:
         default_model = "llama3"
 
     model = st.sidebar.text_input(get_text("model_name"), value=default_model)
+    if backend == "gemini":
+        st.sidebar.caption(get_text("gemini_model_hint"))
     base_url = None
     api_key = None
     if backend == "openai":
@@ -375,6 +399,8 @@ def start_interview(cfg: LLMConfig, persona: str) -> None:
     st.session_state.history = []
     st.session_state.transcript = []
     st.session_state.last_retrieval = None
+    st.session_state.evaluation = None
+    st.session_state.evaluation_scores = None
     interview_state = InterviewState(
         tech_stack=tech_stack,
         available_questions=questions,
@@ -490,24 +516,118 @@ def _extract_overall_score(md: str) -> int | None:
     return int(round(val))
 
 
+_ASPECT_ORDER = [
+    "technical_correctness",
+    "knowledge_depth",
+    "logical_rigor",
+    "position_match",
+    "expression_clarity",
+]
+
+
+def _render_aspect_radar(scores: dict) -> None:
+    if not scores:
+        return
+
+    theta = [get_text(f"aspect_{key}") for key in _ASPECT_ORDER]
+    r = [float(scores.get(key, 0)) for key in _ASPECT_ORDER]
+    theta_closed = theta + [theta[0]]
+    r_closed = r + [r[0]]
+
+    fig = go.Figure(
+        go.Scatterpolar(
+            r=r_closed,
+            theta=theta_closed,
+            fill="toself",
+            name=get_text("radar_overall_score"),
+            line=dict(color="#22D3EE", width=2),
+            fillcolor="rgba(34, 211, 238, 0.35)",
+            hovertemplate="%{theta}: %{r:.1f}/100<extra></extra>",
+        )
+    )
+    fig.update_layout(
+        title=dict(text=get_text("eval_radar_title"), x=0.5, xanchor="center"),
+        polar=dict(
+            bgcolor="rgba(10, 30, 63, 0.25)",
+            radialaxis=dict(
+                visible=True,
+                range=[0, 100],
+                tickfont=dict(size=10),
+                gridcolor="rgba(59, 130, 246, 0.35)",
+            ),
+            angularaxis=dict(
+                tickfont=dict(size=13),
+                gridcolor="rgba(59, 130, 246, 0.35)",
+            ),
+        ),
+        showlegend=False,
+        height=460,
+        margin=dict(l=40, r=40, t=60, b=40),
+        paper_bgcolor="rgba(0,0,0,0)",
+    )
+    st.plotly_chart(fig, use_container_width=True)
+
+
+def _get_display_evaluation(report_md: str) -> str:
+    """Return evaluation markdown in the currently selected UI language.
+
+    The source report is preserved in session state, and translated output is
+    cached per report digest to avoid repeated translation requests.
+    """
+    if not report_md:
+        return ""
+
+    lang = st.session_state.get("language", "en")
+    digest = hashlib.md5(report_md.encode("utf-8")).hexdigest()
+    cache = st.session_state.get("evaluation_translations")
+
+    if not isinstance(cache, dict) or cache.get("digest") != digest:
+        cache = {"digest": digest, "values": {}}
+        st.session_state.evaluation_translations = cache
+
+    values = cache.setdefault("values", {})
+    if lang in values:
+        return values[lang]
+
+    translated = translate_text(report_md, lang)
+    values[lang] = translated if translated else report_md
+    return values[lang]
+
+
 def evaluation_section(cfg: LLMConfig) -> None:
     if st.button(get_text("generate_report")):
         with st.spinner(get_text("scoring")):
-            st.session_state.evaluation = generate_comprehensive_evaluation(
-                cfg,
-                st.session_state.transcript,
-                tech_stack=st.session_state.get("tech_stack", []),
-            )
-            score = _extract_overall_score(st.session_state.evaluation or "")
-            access_token = st.session_state.auth.get("access_token")
-            interview_id = st.session_state.active_interview_id
-            if score is not None and access_token and interview_id:
-                try:
-                    db.set_interview_score(access_token, interview_id, score)
-                except Exception:
-                    pass
+            try:
+                report_md, scores = generate_comprehensive_evaluation(
+                    cfg,
+                    st.session_state.transcript,
+                    tech_stack=st.session_state.get("tech_stack", []),
+                    return_scores=True,
+                )
+                st.session_state.evaluation = report_md
+                st.session_state.evaluation_scores = scores
+                st.session_state.evaluation_translations = None
+                score = _extract_overall_score(report_md or "")
+                access_token = st.session_state.auth.get("access_token")
+                interview_id = st.session_state.active_interview_id
+                if score is not None and access_token and interview_id:
+                    try:
+                        db.set_interview_score(access_token, interview_id, score)
+                    except Exception:
+                        pass
+            except RuntimeError as exc:
+                st.session_state.evaluation = None
+                st.session_state.evaluation_scores = None
+                st.session_state.evaluation_translations = None
+                st.error(str(exc))
+            except Exception as exc:
+                st.session_state.evaluation = None
+                st.session_state.evaluation_scores = None
+                st.session_state.evaluation_translations = None
+                st.error(f"Evaluation failed: {exc}")
     if st.session_state.evaluation:
-        st.markdown(st.session_state.evaluation)
+        _render_aspect_radar(st.session_state.get("evaluation_scores") or {})
+        st.markdown(_get_display_evaluation(st.session_state.evaluation))
 
 
 def sandbox_section() -> None:

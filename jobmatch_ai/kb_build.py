@@ -21,10 +21,36 @@ ROOT = Path(__file__).parent.parent
 VECTOR_STORE_PATH = str(ROOT / "vector_store")
 COLLECTION_NAME = "interview_kb"
 
-BANK_TO_ROLE: dict[str, str] = {
-    "questionBank1": "frontend",
-    "questionBank2": "unity",
-}
+
+def _resolve_dir(env_key: str, *candidates: Path) -> Path:
+    """Resolve a directory path.
+
+    Order:
+    1) explicit env var (absolute or relative to ROOT)
+    2) first existing candidate
+    3) otherwise return the first candidate (for clearer error messages)
+    """
+    raw = (os.getenv(env_key) or "").strip()
+    if raw:
+        p = Path(raw)
+        return p if p.is_absolute() else (ROOT / p)
+    for c in candidates:
+        if c.exists():
+            return c
+    return candidates[0]
+
+
+# Prefer knowledge-base question banks (题库), but keep legacy folders as fallback.
+_FRONTEND_BANK_DIR = _resolve_dir(
+    "JOBMATCH_BANK_FRONTEND_DIR",
+    ROOT / "知识库-前端" / "题库",
+    ROOT / "questionBank1",
+)
+_UNITY_BANK_DIR = _resolve_dir(
+    "JOBMATCH_BANK_UNITY_DIR",
+    ROOT / "知识库-游戏" / "题库",
+    ROOT / "questionBank2",
+)
 
 # CSV 列名候选（中英文兼容）
 _COL_QUESTION = ["题目", "Question"]
@@ -180,14 +206,21 @@ def build(batch_size: int = 64) -> None:
     # --- 1. 收集所有 chunks ---
     all_chunks: list[dict] = []
 
-    for bank_name, role in BANK_TO_ROLE.items():
-        bank_dir = ROOT / bank_name
+    bank_sources: list[tuple[str, Path, str]] = [
+        ("frontend_bank", _FRONTEND_BANK_DIR, "frontend"),
+        ("unity_bank", _UNITY_BANK_DIR, "unity"),
+    ]
+    for label, bank_dir, role in bank_sources:
         if bank_dir.exists():
             chunks = load_csv_chunks(bank_dir, role)
-            logger.info(f"  {bank_name} ({role}): {len(chunks)} question chunks")
+            logger.info(
+                f"  {label} ({role}): {len(chunks)} question chunks  dir={bank_dir}"
+            )
             all_chunks.extend(chunks)
         else:
-            logger.warning(f"  Question bank not found: {bank_dir}")
+            logger.warning(
+                f"  Question bank not found: {bank_dir} (label={label}, role={role})"
+            )
 
     kb_dir = ROOT / "kb"
     if kb_dir.exists():
@@ -199,7 +232,9 @@ def build(batch_size: int = 64) -> None:
 
     if not all_chunks:
         raise ValueError(
-            "No chunks found! Check questionBank1/ and questionBank2/ directories."
+            "No chunks found! Check these directories (or set env overrides): "
+            "知识库-前端/题库, questionBank1, 知识库-游戏/题库, questionBank2. "
+            "You can override via JOBMATCH_BANK_FRONTEND_DIR / JOBMATCH_BANK_UNITY_DIR."
         )
 
     # --- 2. 初始化 Chroma ---

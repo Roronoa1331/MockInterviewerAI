@@ -1,0 +1,154 @@
+﻿题目,答案要点,难度,相关岗位,标签,题目类型
+css 中的 animation、transition、transform 有什么区别？,CSS中`animation`用于创建包含多个关键帧的复杂动画序列，可设置播放时长、次数、延迟、速度曲线等，支持循环播放等复杂效果；`transition`仅在元素状态改变时实现属性的平滑过渡，需指定过渡属性、时长等，适用于简单的状态切换场景；`transform`是对元素进行平移、旋转、缩放、倾斜等变形操作的属性，本身无动画效果，通常配合`animation`或`transition`实现平滑的变形动画，三者核心区别在于`animation`侧重复杂动画序列、`transition`侧重状态过渡、`transform`侧重元素变形。,2,web前端开发,CSS,技术知识
+怎么做移动端的样式适配？,移动端样式适配可采用响应式设计，通过CSS媒体查询根据屏幕尺寸应用不同样式，结合百分比、rem等相对单位；使用Flexbox弹性布局和Grid网格布局实现灵活的页面布局，遵循移动端优先原则先定义小屏样式再扩展大屏样式；对图片和多媒体设置`max-width: 100%`并通过`picture`或`srcset`提供不同尺寸资源；保证交互元素有合适的触摸区域大小，同时在多设备和浏览器中测试调试，确保样式适配各类移动端场景。,3,web前端开发,CSS、媒体查询、Flexbox、响应式,技术知识
+相邻的两个inline-block节点为什么会出现间隔，该如何解决？,相邻inline-block节点出现间隔是因为元素作为行内元素排版时，HTML中的空白符（空格、回车等）会被浏览器处理，默认`white-space: normal`会合并多余空白，空白符占据一定宽度导致间隔；解决方法包括移除HTML中的空格（如标签连写、用注释填充换行）、给元素设置负margin（需适配字体和大小）、将父元素`font-size`设为0再恢复子元素字体大小、使用`letter-spacing`或`word-spacing`设置负值，也可借鉴YUI等成熟方案组合相关属性处理。,1,web前端开发,CSS、class,技术知识
+grid网格布局是什么？,Grid网格布局是CSS中二维的布局方式，由纵横网格线构成框架，能同时处理行与列，可将页面划分为多个主要区域并定义其大小、位置、层次等；设置`display: grid/inline-grid`的元素为网格容器，其子元素为网格项目（仅顶层子元素），容器属性包含`grid-template-columns/rows`（设置行列尺寸，支持repeat、auto-fill、fr、minmax、auto等值）、`grid-gap`（行列间距）、`grid-template-areas`（定义区域）等，项目属性包含`grid-column/row-start/end`（指定网格线定位）、`grid-area`（指定所属区域）等，适配多数现代浏览器，擅长实现复杂的二维布局场景。,3,web前端开发,CSS、class、Flex,技术知识
+CSS3新增了哪些特性？,CSS3在CSS基础上新增了诸多特性，选择器方面扩充了如:nth-child、属性选择器等多种类型；样式上新增边框相关（border-radius、box-shadow、border-image）、背景相关（background-clip/origin/size/break）、文字相关（word-wrap、text-overflow、text-shadow、文字描边等）、颜色表示（rgba/hsla）；动画相关新增transition过渡、transform变形（平移/缩放/旋转/倾斜）、animation自定义动画，还有线性/径向渐变、Flex弹性布局、Grid栅格布局、多列布局、媒体查询等，且CSS3向后兼容CSS1/2，提升了样式开发的灵活性和表现力。,2,web前端开发,CSS、重绘、position,技术知识
+怎么使用 CSS3 实现动画？,CSS3实现动画主要有三种方式：一是`transition`实现渐变动画，需指定过渡的CSS属性、持续时间，可选速度曲线和延迟时间，适配元素状态变化的平滑过渡（注意部分属性如display切换不支持）；二是`transform`实现转变动画，包含translate（位移）、scale（缩放）、rotate（旋转）、skew（倾斜）等功能，需配合transition使用且仅作用于块级元素；三是`animation`实现自定义动画，通过`@keyframes`定义关键帧（from/to或百分比阶段），再给元素设置animation-name、duration等属性（可简写），实现更复杂的自定义动画效果。,3,web前端开发,CSS、class,场景题
+怎么理解回流跟重绘？什么场景下会触发？,回流是浏览器根据样式计算每个元素在页面的大小和位置的过程，重绘是计算完盒模型后根据元素特性绘制的过程，页面渲染先解析HTML/CSS生成DOM/CSSOM树，结合成渲染树后回流计算几何信息，再重绘生成像素最后展示；回流触发场景包括添加/删除可见DOM、元素位置/尺寸/内容变化、页面初始渲染、窗口尺寸变化，以及获取offsetTop、getComputedStyle等需即时计算的属性；重绘触发场景包括颜色/文本方向/阴影修改，且触发回流必触发重绘，浏览器会通过队列化修改优化回流，获取布局信息会强制刷新队列。,3,web前端开发,CSS、盒模型、computed、重排、重绘,技术知识
+什么是响应式设计？响应式设计的基本原理是什么？如何进行实现？,响应式设计是使页面设计与开发能根据用户行为、设备环境（系统、屏幕尺寸/方向等）响应调整的布局方式，核心原理是通过媒体查询检测设备特征，结合弹性布局、相对单位等适配不同屏幕；实现方式包括使用媒体查询针对不同屏幕宽度定义样式，采用百分比、rem/vw/vh等相对单位替代固定像素，使用Flex/Grid布局实现灵活排版，遵循移动端优先原则设计样式，适配图片等媒体资源，保证交互元素适配触摸操作，同时多设备测试确保布局自适应各类场景。,5,web前端开发,CSS、媒体查询、响应式,场景题
+如果使用CSS提高页面性能？,使用CSS提高页面性能可从减少回流重绘入手，如通过类名批量修改样式而非内联样式、避免频繁修改几何属性、给动画元素设fixed/absolute脱离文档流、利用CSS3硬件加速（transform/opacity等）；优化选择器（减少嵌套和复杂选择器），避免使用@import（改用link），压缩CSS代码，拆分样式文件按需加载；使用雪碧图减少图片请求，合理利用继承属性减少代码量，避免CSS表达式，设置图片等元素的尺寸避免重排，通过这些方式降低浏览器渲染开销，提升页面加载和渲染性能。,2,web前端开发,CSS、资源压缩、Webpack、Rollup,技术知识
+如何实现单行／多行文本溢出的省略样式？,单行文本溢出省略可设置`white-space: nowrap`（强制不换行）、`overflow: hidden`（隐藏溢出内容）、`text-overflow: ellipsis`（显示省略号）；多行文本溢出省略可结合`display: -webkit-box`、`-webkit-line-clamp: 行数`、`-webkit-box-orient: vertical`和`overflow: hidden`（webkit内核有效），也可通过设置固定高度、行高配合overflow隐藏，或借助JS计算文本长度截断，不同方案适配不同浏览器和场景。,3,web前端开发,CSS、class、position、响应式,场景题
+如何使用css完成视差滚动效果？,CSS实现视差滚动可利用`background-attachment: fixed`，使背景图片固定在视口，滚动页面时内容移动而背景不动形成视差；也可结合`transform`属性，给不同层级元素设置不同的滚动速度（如通过`translateY`结合滚动事件调整，或利用CSS变量配合`scroll-behavior`），还可使用`perspective`和`translateZ`创建3D视差效果，通过控制元素的滚动偏移量和渲染层级，实现不同元素滚动速度不同的视差体验。,3,web前端开发,CSS、HTTPS、class、继承,场景题
+怎么使用 CSS 如何画一个三角形？,CSS画三角形核心是利用边框特性，先设置一个宽高为0的元素，给四个边框设置不同颜色并指定边框宽度，将不需要的边框设为透明，例如：`.triangle { width: 0; height: 0; border-width: 50px; border-style: solid; border-color: transparent transparent red transparent; }`，通过调整边框宽度和透明方向，可绘制出不同方向、大小的三角形，也可通过调整单边边框宽度实现直角三角形等变体。,2,web前端开发,CSS、class、position、伪类,技术知识
+说说对 CSS 工程化的理解,CSS工程化是将工程化思想应用于CSS开发，解决大规模项目中CSS的可维护性、复用性、可扩展性等问题，核心包括模块化（拆分样式文件、隔离样式作用域）、组件化（样式与组件绑定）、预处理器（Sass/Less）、后处理器（PostCSS）、构建工具集成（Webpack等）、规范化（命名规范、代码规范）、自动化（自动前缀、压缩、按需加载），通过这些手段降低样式开发的复杂度，提升协作效率，适配大型项目的开发和维护需求。,3,web前端开发,CSS、HTTPS、Webpack、Babel,技术知识
+怎么触发BFC，BFC有什么应用场景？,触发BFC的方式包括：根元素（html）、浮动元素（float非none）、绝对/固定定位元素（position为absolute/fixed）、行内块元素（display: inline-block）、表格单元格/标题（display: table-cell/table-caption）、overflow非visible的元素、弹性/网格容器（display: flex/grid等）；BFC应用场景有清除浮动（避免父元素高度塌陷）、防止margin重叠（BFC内元素margin不与外部重叠）、实现自适应两栏布局（BFC元素不与浮动元素重叠），BFC是块格式化上下文，内部元素布局不受外部影响，外部也不影响内部。,3,web前端开发,CSS、Context、HTTPS、BFC,技术知识
+单行文本怎么实现两端对齐？,单行文本两端对齐可使用`text-align: justify`，但需配合`text-align-last: justify`（兼容现代浏览器），或给文本容器设置`width`，并确保文本有足够宽度，对于内联元素还可结合`display: inline-block`和`width: 100%`；也可通过`letter-spacing`调整字符间距辅助实现，注意`text-align: justify`对最后一行无效，单行场景下需确保文本仅一行，以此实现文字在容器内左右两端对齐的效果。,3,web前端开发,CSS、class,场景题
+说说你对 CSS 模块化的理解,CSS模块化是将CSS代码拆分为独立、可复用的模块，每个模块负责特定功能或组件的样式，避免样式冲突和代码冗余，核心目标是提高样式的可维护性、复用性和可扩展性；模块化需解决样式作用域隔离（避免全局污染）、依赖管理、按需加载等问题，常见实现思路包括命名规范（如BEM）、CSS-in-JS、CSS Modules、预处理器的模块化导入等，使样式开发符合软件工程的模块化思想，适配团队协作和大型项目开发。,5,web前端开发,CSS、Babel、class、模块化,技术知识
+CSS 模块化的实现方式,CSS模块化的实现方式主要有：一是命名规范类，如BEM（Block-Element-Modifier）通过统一的命名规则隔离样式作用域，避免冲突；二是CSS Modules，借助构建工具（Webpack）给类名生成唯一哈希值，实现局部作用域，支持导入导出样式；三是CSS-in-JS，将CSS写在JS中，通过组件化方式绑定样式，天然隔离作用域；四是预处理器模块化，如Sass/Less的`@import`导入拆分的样式文件，封装变量、混合宏等；五是使用Shadow DOM（Web Components）实现样式隔离，各方式从命名、工具、语法等层面解决样式模块化的核心问题。,4,web前端开发,CSS、Webpack、class、模块化,场景题
+怎么让Chrome支持小于12px 的文字？,Chrome默认限制最小字体为12px，要显示小于12px的文字，可使用`transform: scale()`缩放，如`font-size: 12px; transform: scale(0.8);`（缩放至80%即9.6px），需配合`display: inline-block/block`和`transform-origin: left top`调整缩放原点；也可使用`-webkit-text-size-adjust: none`（部分版本有效），或用SVG/Canvas绘制文字，还可通过`zoom`属性（非标准）缩放元素，其中`transform: scale`是最常用且兼容性较好的方式。,2,web前端开发,CSS、class、响应式,技术知识
+flexbox（弹性盒布局模型）是什么，适用什么场景？,Flexbox弹性盒布局是CSS的一维布局模型，通过给容器设置`display: flex`，使子元素（弹性项）可在水平或垂直方向上灵活分配空间、对齐和排序；容器属性包括`flex-direction`（主轴方向）、`justify-content`（主轴对齐）、`align-items`（交叉轴对齐）等，项目属性包括`flex`（伸缩比例）、`order`（排序）等；适用于单行/多行元素的均匀分布、垂直居中、自适应布局（如导航栏、卡片布局、移动端适配）、元素排序调整等场景，相比传统布局更简洁高效，适配一维方向的灵活排版需求。,5,web前端开发,CSS、Flexbox、响应式,技术知识
+如何实现两栏布局，右侧自适应？三栏布局中间自适应呢？,两栏布局右侧自适应：一是利用浮动，左侧设固定宽度+`float: left`，右侧设`overflow: hidden`触发BFC，不与浮动元素重叠实现自适应；二是Flex布局，容器设`display: flex`，左侧固定宽度，右侧设`flex: 1`；三是Grid布局，容器设`grid-template-columns: 固定宽度 1fr`。三栏布局中间自适应：一是浮动+BFC，左右固定宽度并分别左/右浮动，中间设`overflow: hidden`；二是Flex布局，容器设`display: flex`，左右固定宽度，中间`flex: 1`；三是Grid布局，设`grid-template-columns: 固定宽度 1fr 固定宽度`；四是经典的圣杯/双飞翼布局，通过margin和定位调整实现中间自适应，适配不同的兼容性需求。,4,web前端开发,CSS、class、Flex,场景题
+设备像素、css像素、设备独立像素、dpr、ppi 之间有什么区别？,设备像素是物理像素，是屏幕硬件的最小显示单元；设备独立像素（逻辑像素）是系统抽象的像素单位，用于统一不同设备的显示尺寸；CSS像素是Web开发中使用的像素单位，默认与设备独立像素一致，缩放时会变化；dpr（设备像素比）= 设备像素 / 设备独立像素，如Retina屏dpr=2，1个独立像素对应2×2设备像素；ppi（像素密度）是每英寸的设备像素数，反映屏幕清晰度，数值越高屏幕越清晰；核心区别在于设备像素是物理属性，独立像素是逻辑抽象，CSS像素映射独立像素，dpr和ppi描述像素的映射关系和密度特征。,2,web前端开发,CSS,技术知识
+说说你对盒子模型的理解,CSS盒子模型是描述元素布局的核心模型，每个元素视为一个矩形盒子，包含内容区（content）、内边距（padding）、边框（border）、外边距（margin）；分为标准盒模型（W3C）和IE盒模型，标准盒模型的`width/height`仅包含内容区，IE盒模型（`box-sizing: border-box`）包含内容区+内边距+边框；通过`box-sizing`属性可切换盒模型，盒子模型决定了元素的实际渲染尺寸和布局间距，是理解CSS布局的基础，如计算元素总宽度需结合盒模型的各部分尺寸。,2,web前端开发,CSS、盒模型、class、继承,技术知识
+怎么实现样式隔离？,实现样式隔离的方式有：一是命名规范，如BEM通过唯一命名避免样式冲突；二是CSS Modules，借助构建工具生成唯一类名，限制样式作用域；三是CSS-in-JS，将样式写在JS组件中，样式与组件绑定，天然隔离；四是Web Components的Shadow DOM，创建封闭的DOM子树，样式仅作用于内部；五是使用iframe，完全隔离页面样式；六是通过CSS命名空间（如自定义属性前缀）、scoped样式（Vue等框架），不同方式从命名、工具、DOM结构等层面实现样式的局部作用域，避免全局污染。,3,web前端开发,CSS、作用域、模板字符串、模块化,技术知识
+flex 布局下，怎么改变元素的顺序？,Flex布局中可通过给弹性项目设置`order`属性改变元素顺序，`order`默认值为0，数值越小越靠前，数值越大越靠后（可设负数）；例如给第二个元素设`order: -1`，其会排在第一个元素之前，给第三个元素设`order: 1`，其会排在最后；该属性仅改变视觉顺序，不影响DOM结构顺序，适用于调整元素展示顺序而无需修改HTML结构的场景，是Flex布局中灵活调整元素排序的核心属性。,2,web前端开发,CSS、排序、class、Flex,技术知识
+”flex: auto;“是什么意思？,`flex: auto`是Flex布局中项目的`flex`属性简写，等价于`flex: 1 1 auto`，其中第一个值`flex-grow: 1`（项目可沿主轴放大，分配剩余空间），第二个值`flex-shrink: 1`（项目可沿主轴缩小，空间不足时收缩），第三个值`flex-basis: auto`（项目的初始尺寸为自身内容/宽高决定的尺寸）；设置`flex: auto`的项目会自适应分配容器的剩余空间，同时在空间不足时自动收缩，适配Flex布局的弹性分配需求。,2,web前端开发,CSS、Flex,技术知识
+object-fit 用法,`object-fit`用于控制替换元素（img、video、canvas等）的内容在其容器中的显示方式，属性值包括：`fill`（默认，拉伸内容填满容器，可能变形）、`contain`（保持宽高比，内容适配容器，可能留空白）、`cover`（保持宽高比，覆盖容器，超出部分裁剪）、`none`（保持内容原有尺寸，不缩放）、`scale-down`（取`contain`或`none`中尺寸较小的效果）；需配合`object-position`（调整内容在容器中的位置）使用，解决替换元素尺寸与容器不匹配的显示问题，避免内容变形或裁剪不当。,3,web前端开发,CSS、HTTPS、position,技术知识
+行内元素和块级元素有什么区别？,行内元素（如span、a）默认不独占一行，宽度高度由内容决定，无法设置宽高（可通过display修改），margin/padding仅水平方向有效，垂直方向不影响布局；块级元素（如div、p）默认独占一行，宽度默认撑满父容器，可设置宽高、margin/padding，能包含行内元素和块级元素（部分块级元素如p不能包含div）；可通过`display`属性（block/inline/inline-block）切换元素的显示类型，两者的布局特性差异是CSS排版的基础。,2,web前端开发,CSS,技术知识
+em/px/rem/vh/vw 这些单位有什么区别？,`px`是固定像素单位，绝对单位，不随屏幕尺寸/字体变化；`em`是相对单位，相对于父元素的字体大小（若自身设字体大小则相对自身，嵌套时易叠加）；`rem`是相对单位，仅相对于根元素（html）的字体大小，避免em的嵌套叠加问题，适配移动端；`vw`是视口宽度的1%，`vh`是视口高度的1%，相对视口尺寸，适配响应式布局；核心区别在于px是绝对单位，em/rem相对字体大小，vw/vh相对视口尺寸，不同单位适配不同的布局场景（如rem适配移动端，vw/vh适配全屏布局）。,3,web前端开发,CSS、class、继承、响应式,技术知识
+html和css中的图片加载与渲染规则是什么样的？,"HTML中图片（img）加载是异步的，解析到img标签时发起请求，不阻塞DOM解析，但阻塞页面渲染（可通过loading=""lazy""懒加载）；CSS中背景图（background-image）在CSSOM构建完成、应用到元素且元素出现在视口时加载，不阻塞DOM/CSSOM解析；渲染规则上，图片加载完成后才会渲染，若未设置尺寸，图片加载完成可能引发回流；浏览器会缓存图片，重复请求复用缓存；`srcset/picture`可根据屏幕密度/尺寸加载不同图片，`object-fit`控制图片渲染方式，图片渲染优先级低于关键CSS，确保页面骨架先渲染。",2,web前端开发,CSS、伪类,技术知识
+CSS中，有哪些方式可以隐藏页面元素？有什么区别？,CSS隐藏元素的方式及区别：①`display: none`：元素从DOM流中移除，不占据空间，无法交互，回流重绘；②`visibility: hidden`：元素仍占据空间，不可见，子元素可通过`visibility: visible`显示，仅重绘；③`opacity: 0`：元素透明，占据空间，可交互，仅重绘；④`position: absolute`+`left: -9999px`：移出视口，占据空间（文档流），不可见；⑤`clip/clip-path`：裁剪元素，仅显示指定区域，占据空间；⑥`z-index: -999`：被其他元素覆盖，占据空间；核心区别在于是否占据空间、是否可交互、是否触发回流/重绘、子元素是否可显示。,2,web前端开发,CSS、盒模型、GPU加速、重排,技术知识
+CSS3 中 transition 和 animation 的属性分别有哪些？,CSS3中`transition`属性包括：`transition-property`（过渡的CSS属性）、`transition-duration`（过渡时长）、`transition-timing-function`（速度曲线，如ease/linear/ease-in等）、`transition-delay`（延迟时间），可简写为`transition: 属性 时长 曲线 延迟`；`animation`属性包括：`animation-name`（关键帧名称）、`animation-duration`（动画时长）、`animation-timing-function`（速度曲线）、`animation-delay`（延迟）、`animation-iteration-count`（播放次数，infinite为无限）、`animation-direction`（播放方向，如normal/reverse）、`animation-play-state`（播放状态，running/paused）、`animation-fill-mode`（填充模式，如forwards/backwards），可简写为`animation: 名称 时长 曲线 延迟 次数 方向 填充模式`。,2,web前端开发,CSS,技术知识
+说说对 CSS 预编语言的理解，以及它们之间的区别？,CSS预处理器（预编语言）是对CSS的扩展，引入变量、混合宏、嵌套、继承、函数等特性，编写后编译为标准CSS，提升开发效率和可维护性；主流的有Sass（Scss）、Less、Stylus；区别：语法上，Sass有缩进式（Sass）和花括号式（Scss），Less类似CSS，Stylus语法更灵活（可省略括号/分号）；编译依赖，Sass基于Ruby/Node-sass，Less基于JS，Stylus基于Node.js；功能上，Sass内置函数更丰富，Less变量声明用`@`，Sass用`$`，Stylus可省略变量前缀；继承实现，Sass用`@extend`，Less用混合宏，Stylus支持多种继承方式，三者核心都是增强CSS的工程化能力，语法和生态略有差异。,2,web前端开发,CSS、继承、编译,技术知识
+::before 和::after 中双冒号和单冒号有什么区别、作用？,单冒号（:before/:after）是CSS2的伪元素写法，双冒号（::before/::after）是CSS3为区分伪元素和伪类（如:hover/:active）新增的写法，核心作用一致：为元素创建伪元素，作为元素的第一个/最后一个子元素，通过`content`属性定义内容（可空），常用于添加装饰性内容、清除浮动、实现特殊样式（如三角形）；区别仅在于语法规范，CSS3中伪元素用双冒号，伪类用单冒号，现代浏览器兼容单/双冒号写法，IE8仅支持单冒号，使用时需兼顾兼容性，伪元素默认是行内元素，可通过display修改布局。,2,web前端开发,CSS、伪类、伪元素,技术知识
+z-index属性在什么情况下会失效？,z-index属性失效的场景：①元素未设置`position`属性（static除外，需为relative/absolute/fixed），z-index仅对定位元素生效；②父元素设置了`z-index`，子元素的z-index相对于父元素的堆叠上下文，无法超越父元素所在的堆叠层级；③元素所在的堆叠上下文被其他元素覆盖，如父元素`overflow: hidden`且无定位，或flex/grid容器的子元素（无需定位也有堆叠上下文）；④元素的`opacity < 1`、`transform`、`filter`等属性创建了新的堆叠上下文，z-index仅在该上下文内有效；⑤同级元素中，未设置z-index的定位元素，按DOM顺序堆叠，z-index无效。,2,web前端开发,CSS、z-index,技术知识
+使用原生js实现以下效果：点击容器内的图标，图标边框变成border:1px solid red，点击空白处重置,"实现思路：获取容器和图标元素，给图标绑定点击事件（阻止冒泡），设置边框样式；给document绑定点击事件，重置图标边框；代码示例：
+```javascript
+const container = document.querySelector('.container');
+const icon = container.querySelector('.icon');
+icon.addEventListener('click', (e) => {
+e.stopPropagation(); // 阻止事件冒泡到document
+icon.style.border = '1px solid red';
+});
+document.addEventListener('click', () => {
+icon.style.border = ''; // 重置边框
+});
+```
+核心是利用事件冒泡，点击图标时阻止冒泡避免触发document的点击事件，点击空白处触发document事件重置样式。",2,web前端开发,CSS、let、const,技术知识
+position: fixed 一定是相对于浏览器窗口进行定位吗？,position: fixed并非绝对相对于浏览器窗口定位，其默认相对于视口（浏览器窗口）定位，但如果该元素的祖先元素设置了`transform`、`perspective`、`filter`属性（值不为none），会创建新的包含块，此时fixed元素会相对于该祖先元素定位；例如父元素设`transform: scale(1)`，子元素fixed会相对于父元素而非视口，这是CSS规范中包含块的特殊规则，导致fixed定位的参考容器改变，需注意此类场景的兼容性。,2,web前端开发,CSS、层叠上下文、position,技术知识
+css选择器有哪些？优先级分别是什么？哪些属性可以继承？,CSS选择器包括：基础选择器（元素、类、ID、通配符）、组合选择器（后代、子元素、相邻兄弟、通用兄弟）、伪类选择器（:hover/:active/:nth-child等）、伪元素选择器（::before/::after等）、属性选择器（[attr]/[attr=value]等）；优先级从高到低：!important > 行内样式 > ID选择器 > 类/伪类/属性选择器 > 元素/伪元素选择器 > 通配符/继承样式；可继承的属性主要是文本相关（font-size/font-family/color/text-align等）、列表相关（list-style等）、光标相关（cursor），布局相关（width/height/margin/padding/border等）不可继承，继承属性可通过`inherit`关键字强制继承。,2,web前端开发,CSS、class、继承、伪类,技术知识
+使用css实现一个无限循环动画,"实现思路：通过`@keyframes`定义循环动画（如旋转），给元素设置`animation`属性并指定`infinite`（无限循环）；代码示例：
+```css
+@keyframes rotate {
+0% { transform: rotate(0deg); }
+100% { transform: rotate(360deg); }
+}
+.box {
+width: 100px;
+height: 100px;
+border: 1px solid red;
+animation: rotate 2s linear infinite; /* 2秒一圈，线性速度，无限循环 */
+}
+```
+核心是`animation-iteration-count: infinite`，配合连续的关键帧（如0%到100%的旋转）实现无间断循环。",2,web前端开发,CSS、class,技术知识
+怎么实现一个宽高自适应的正方形？,实现宽高自适应正方形的方式：①利用padding百分比（基于父元素宽度），设置`width: 100%; padding-top: 100%; height: 0;`，内容用绝对定位；②利用aspect-ratio属性（现代浏览器），`width: 100%; aspect-ratio: 1/1;`；③利用vw单位，`width: 50vw; height: 50vw;`（基于视口宽度）；④Flex/Grid布局中，子元素设`flex: 1`，配合`aspect-ratio`；其中padding百分比兼容所有浏览器，aspect-ratio是CSS3新增属性，简洁高效，适配不同的自适应场景。,3,web前端开发,CSS,场景题
+Sass、Less 是什么？为什么要使用他们？,Sass（Scss）和Less都是CSS预处理器，是对CSS的扩展语言，引入变量、嵌套、混合宏、继承、函数等特性，编写后编译为标准CSS；使用它们的原因：①变量复用（如统一主题色、字体大小），减少重复代码；②嵌套语法，贴合HTML结构，提高代码可读性；③混合宏/函数，封装重复样式（如兼容前缀、动画）；④继承特性，复用样式规则；⑤模块化拆分，便于大型项目的样式管理和维护；⑥提升开发效率，降低样式修改成本，使CSS开发更符合软件工程的复用和模块化思想。,2,web前端开发,CSS、继承、编译、Node.js,技术知识
+CSS预处理器/后处理器是什么？为什么要使用它们？,CSS预处理器（如Sass/Less/Stylus）是扩展CSS语法的语言，增加变量、嵌套、继承等特性，编译为标准CSS，解决CSS原生缺乏工程化特性的问题；CSS后处理器（如PostCSS）是对已编写的CSS进行处理，如自动添加浏览器前缀（autoprefixer）、代码压缩、语法转换（CSSNext）；使用预处理器可提升样式的复用性、可维护性，降低重复代码；使用后处理器可自动化处理兼容性、优化代码，无需手动编写前缀，适配不同浏览器，两者结合使CSS开发更高效、规范，适配大型项目的工程化需求。,2,web前端开发,CSS、继承、编译,技术知识
+为什么有时候⽤translate来改变位置⽽不是使用position进行定位？,使用translate改变位置而非position定位的原因：①性能层面，translate由GPU加速渲染，仅触发重绘，不触发回流（position改变top/left等会触发回流），动画更流畅；②定位层面，translate是相对元素自身位置偏移，position（absolute/relative）是相对包含块偏移，translate不影响文档流，且无需修改top/left等属性；③精度层面，translate支持小数像素，定位更精准；④布局层面，translate不会改变元素的布局空间，position可能影响其他元素的布局，因此在动画、高频位置调整场景中，translate性能更优，体验更好。,3,web前端开发,CSS、重绘,技术知识
+transition和animation的区别？,transition和animation的核心区别：①触发方式，transition需元素状态变化（如hover、JS修改样式）触发，默认无动画，animation可自动触发（无需状态变化）；②复杂度，transition仅支持从初始到结束的单一过渡，animation支持多关键帧，可实现复杂动画序列；③控制能力，animation可设置播放次数、方向、暂停/播放状态、填充模式，transition仅能控制过渡时长、延迟、速度曲线；④循环性，transition默认单次触发，需重复触发才能循环，animation可通过infinite实现无限循环；⑤应用场景，transition适用于简单的状态切换动画（如hover效果），animation适用于复杂的、自动播放的动画（如加载动画）。,2,web前端开发,CSS,技术知识
+硬件加速的原理是什么？,硬件加速的原理是将CSS动画、变形等操作交由GPU（图形处理器）处理，而非CPU，GPU擅长并行计算和图形渲染，可减少CPU的负载；浏览器会将需要硬件加速的元素分层，生成独立的合成层，存储在GPU显存中，当元素仅做transform/opacity等变换时，GPU只需修改层的位置/透明度，无需重绘整个页面（仅重排合成层），避免了回流和重绘的性能开销，使动画更流畅；核心是利用GPU的图形处理能力，优化渲染流程，减少主线程的计算压力。,3,web前端开发,CSS、排序、DOM、Map,技术知识
+什么是硬件加速？,硬件加速是浏览器的一种渲染优化技术，指将CSS的transform、opacity、filters等属性的渲染计算交由GPU（图形处理器）处理，而非传统的CPU处理；开启硬件加速后，浏览器会为元素创建独立的合成层，GPU负责合成层的渲染和变换，无需触发页面的回流和重绘，仅需更新合成层的位置或属性，大幅提升动画和交互的流畅度；常见触发硬件加速的属性有transform、opacity、will-change等，需注意过度使用会占用过多GPU显存，导致性能问题。,2,web前端开发,CSS,技术知识
+CSS动画和JS实现的动画分别有哪些优缺点？,CSS动画优点：语法简洁，开发成本低，由浏览器优化（硬件加速），性能优，不阻塞主线程；缺点：复杂动画（如路径动画、交互联动）实现困难，控制能力弱（如动态修改关键帧），兼容性依赖CSS属性支持。JS动画优点：控制能力强，可实现复杂动画（如物理运动、路径动画），支持动态修改动画参数、暂停/续播/反向播放，适配复杂交互场景；缺点：开发成本高，若未优化（如频繁操作DOM）易阻塞主线程，性能依赖代码质量，需手动处理硬件加速。,3,web前端开发,CSS、线程,技术知识
+为何CSS不支持父选择器？,CSS不支持父选择器的核心原因：①渲染性能，CSS解析是从右到左匹配选择器，父选择器（如父>子反向）需遍历所有子元素再匹配父元素，大幅增加渲染开销，降低页面加载和样式更新效率；②规范设计，CSS遵循“层叠”和“继承”的核心思想，侧重从父到子的样式传递，父选择器打破这种单向流，增加复杂度；③实现难度，父选择器需回溯DOM树，浏览器的样式匹配算法难以高效支持，易引发回流重绘的性能问题，因此CSS规范暂未引入原生父选择器，可通过JS或预处理器模拟，但非原生支持。,2,web前端开发,CSS,技术知识
+脱离文档流有哪些方法？,脱离文档流的方法：①设置`float: left/right`，元素脱离普通文档流，仅保留浮动流，周围元素环绕；②设置`position: absolute/fixed`，绝对/固定定位使元素完全脱离文档流，不占据空间，相对于包含块定位；③设置`display: none`，元素从文档流中移除，无空间占据；④Flex/Grid布局中，项目的`position: absolute`也会脱离弹性/网格流；核心是这些方式使元素不再参与普通文档流的布局计算，周围元素的布局不再受其影响。,2,web前端开发,CSS、盒模型,技术知识
+如何从html元素继承box-sizing？,"要让所有元素从html继承box-sizing，可先给html设置`box-sizing: border-box`，再通过通配符选择器设置`box-sizing: inherit`，代码示例：
+```css
+html {
+box-sizing: border-box;
+}
+*, *::before, *::after {
+box-sizing: inherit;
+}
+```
+核心是利用CSS的继承特性，html作为根元素设置box-sizing，其他元素（包括伪元素）继承该属性，统一盒模型，避免重复设置，适配全局布局的盒模型统一需求。",2,web前端开发,CSS、继承,技术知识
+js和css是如何影响DOM树构建的？,JS影响DOM树构建：①解析HTML时遇到`<script>`标签（无async/defer），会暂停DOM解析，执行JS代码，若JS修改DOM（如createElement），会直接改变DOM树结构；②异步JS（async/defer）不阻塞DOM解析，但执行时可能修改DOM；③JS访问DOM属性（如offsetTop）会强制DOM解析完成，触发回流。CSS影响DOM树构建：CSS不直接修改DOM树结构，但CSSOM构建会阻塞渲染树生成，若JS依赖CSSOM（如getComputedStyle），会暂停JS执行和DOM解析，等待CSSOM构建完成；核心是JS可直接操作DOM，CSS通过阻塞渲染间接影响DOM解析节奏。,3,web前端开发,CSS、CDN、节流、DOM,技术知识
+CSSOM树和DOM树是同时解析的吗？,"CSSOM树和DOM树并非完全同时解析，浏览器解析HTML时，遇到<link rel=""stylesheet"">或<style>标签，会并行解析CSS生成CSSOM树，同时继续解析HTML生成DOM树；但两者解析是独立的，DOM解析不受CSS解析阻塞（除非JS依赖CSSOM），CSSOM解析也不阻塞DOM解析；只有当构建渲染树时，才需要DOM树和CSSOM树都完成，因此解析阶段两者并行，渲染阶段需同步，核心是解析并行，渲染同步。",2,web前端开发,CSS,技术知识
+position：absolute绝对定位，是相对于谁的定位？,position: absolute的元素相对于最近的已定位祖先元素（position为relative/absolute/fixed/sticky）的包含块定位；若没有已定位的祖先元素，则相对于初始包含块（根元素html，即视口）定位；包含块的确定规则：①祖先元素为块级元素，包含块为该元素的内容区+内边距；②祖先元素为行内元素，包含块为该元素的内容区；③祖先元素为Flex/Grid容器，包含块为容器的内容区；若祖先元素设置了transform/perspective/filter，包含块为该祖先元素，而非已定位祖先，需注意该特殊规则。,2,web前端开发,CSS、position,技术知识
+CSS 垂直居中有哪些实现方式？,CSS垂直居中的实现方式：①Flex布局，容器设`display: flex; align-items: center;`（单行）或`align-content: center;`（多行）；②Grid布局，容器设`display: grid; align-items: center;`；③定位+transform，子元素设`position: absolute; top: 50%; transform: translateY(-50%);`，父元素设`position: relative;`；④table-cell布局，父元素设`display: table-cell; vertical-align: middle;`；⑤行高法，单行文本设`line-height = 父元素高度`；⑥margin:auto，子元素设`position: absolute; top: 0; bottom: 0; margin: auto;`；不同方式适配不同场景（单行/多行、固定/自适应高度）。,3,web前端开发,CSS、class、position、Flex,场景题
+如何使用css来实现禁止移动端页面的左右划动手势？,"禁止移动端左右划动手势可通过CSS禁止页面滚动和触摸事件，代码示例：
+```css
+body {
+overflow-x: hidden; /* 禁止水平滚动 */
+touch-action: pan-y; /* 仅允许垂直触摸滑动，禁止水平 */
+}
+/* 兼容旧版浏览器 */
+html, body {
+width: 100%;
+height: 100%;
+overflow-x: hidden;
+}
+```
+也可结合JS阻止触摸事件：
+```javascript
+document.addEventListener('touchmove', (e) => {
+if (e.touches[0].movementX !== 0) {
+e.preventDefault();
+}
+}, { passive: false });
+```
+核心是通过overflow-x:hidden禁止水平滚动，touch-action限制触摸行为，配合JS阻止水平滑动事件。",2,web前端开发,CSS,技术知识
+如何检测浏览器所支持的最小字体大小？,"检测浏览器最小字体大小的方法：①创建多个隐藏的span元素，设置不同的font-size（如8px、9px…12px），通过getBoundingClientRect()获取实际渲染宽度/高度，宽度不再变化时的字体大小即为最小支持值；②代码示例：
+```javascript
+function getMinFontSize() {
+const testEl = document.createElement('span');
+testEl.style.visibility = 'hidden';
+testEl.style.position = 'absolute';
+document.body.appendChild(testEl);
+let minSize = 0;
+for (let size = 8; size <= 12; size++) {
+testEl.style.fontSize = `${size}px`;
+const width = testEl.offsetWidth;
+if (width > 0 && minSize === 0) {
+minSize = size;
+} else if (width === testEl.offsetWidth && minSize > 0) {
+break;
+}
+}
+document.body.removeChild(testEl);
+return minSize;
+}
+```
+核心是利用不同字体大小的元素渲染尺寸变化，判断浏览器的最小渲染字体。",2,web前端开发,CSS、DOM,技术知识
+Js 动画与 CSS 动画区别及相应实现？,"JS动画与CSS动画的区别：①实现方式，JS动画通过定时器（setTimeout/setInterval）或requestAnimationFrame修改DOM样式，CSS动画通过@keyframes/transition定义样式过渡；②性能，CSS动画由浏览器优化（硬件加速），仅transform/opacity无回流，JS动画易阻塞主线程，需手动优化；③控制能力，JS可动态修改动画参数、实现复杂路径/物理动画，CSS动画控制能力弱；④兼容性，CSS动画依赖属性支持，JS动画兼容性更广。
+实现示例：
+CSS动画（旋转）：
+```css
+@keyframes rotate {
+0% { transform: rotate(0deg); }
+100% { transform: rotate(360deg); }
+}
+.box { animation: rotate 2s linear infinite; }
+```
+JS动画（旋转）：
+```javascript
+const box = document.querySelector('.box');
+let deg = 0;
+function animate() {
+deg += 1;
+box.style.transform = `rotate(${deg}deg)`;
+requestAnimationFrame(animate);
+}
+animate();
+```
+核心是CSS动画简洁高效，JS动画灵活复杂，按需选择实现方式。",2,web前端开发,CSS,技术知识

@@ -1,0 +1,53 @@
+﻿题目,答案要点,难度,相关岗位,标签,题目类型
+CharacterController 与 Rigidbody 的核心区别是什么？,Rigidbody 走完整物理模拟（力、扭矩、碰撞响应）；CharacterController 更像带碰撞滑动的运动学角色控制器，便于做台阶、坡度与第一/三人称移动，但不等价于真实刚体动力学。,1,Unity客户端开发,物理,技术知识
+Unity 物理中常见的对刚体施力方式有哪些？,常用 Rigidbody.AddForce/AddRelativeForce、AddTorque、AddForceAtPosition（在指定世界坐标施力产生扭矩）等；还可通过 MovePosition/MoveRotation 做运动学式移动；力与冲量模式（ForceMode）影响瞬态与连续效果。,2,Unity客户端开发,综合,技术知识
+物理更新一般放在哪个系统函数里？,应放在 FixedUpdate：物理以固定时间步推进，与渲染帧率解耦；对刚体施力与移动应在此调用，Update 适合输入与表现逻辑；低帧时仍按时间步累积，可用 Profiler 观察 Physics 模块。,2,Unity客户端开发,综合,技术知识
+游戏动画常见有哪几类？各自思路是什么？,关节动画：角色分块网格拼合，实现简单但接缝明显；骨骼动画：骨骼层次+蒙皮网格，主流方案，便于压缩与 IK/重定向；顶点/形态键关键帧：对网格顶点或 BlendShape 插值，表达力强但数据与内存开销大。,4,Unity客户端开发,动画,技术知识
+如何让动画反向播放？,将 Animator speed 或 AnimationState.speed 设为 -1，或倒放剪辑；注意根运动与事件帧方向；Root motion 场景需额外处理位移符号。,2,Unity客户端开发,动画,技术知识
+Animator 中 Animation Layer 的作用是什么？,用于身体不同部位或不同逻辑的动画分层与混合（如上半身攻击、下半身移动）；可设权重与遮罩（Avatar Mask）；减少相互覆盖，便于状态机组织。,2,Unity客户端开发,动画,技术知识
+CharacterController 与 Rigidbody 的核心区别是什么？,Rigidbody 走完整物理模拟；CharacterController 提供简化碰撞与滑动，适合角色移动但非全物理刚体。,1,Unity客户端开发,物理,技术知识
+Unity 物理中常见的对刚体施力方式有哪些？,常用 AddForce/AddRelativeForce、AddTorque、AddForceAtPosition；配合 ForceMode 区分持续力与瞬时冲量；运动学控制可用 MovePosition/MoveRotation。,2,Unity客户端开发,综合,项目经历深挖
+物理更新一般放在哪个系统函数里？,应放在 FixedUpdate：物理以固定时间步推进，与渲染帧率解耦；对刚体施力与移动应在此调用，Update 适合输入与表现逻辑；低帧时仍按时间步累积，可用 Profiler 观察 Physics 模块。,2,Unity客户端开发,综合,场景题
+请描述游戏动画有哪几种，以及其原理？,关节动画：角色分块网格拼合，实现简单但接缝明显；骨骼动画：骨骼层次+蒙皮网格，主流方案，便于压缩与 IK/重定向；顶点/形态键关键帧：对网格顶点或 BlendShape 插值，表达力强但数据与内存开销大。,4,Unity客户端开发,动画,技术知识
+CharacterController 与 Rigidbody 的核心区别是什么？,Rigidbody 走完整物理模拟（力、扭矩、碰撞响应）；CharacterController 更像带碰撞滑动的运动学角色控制器，便于做台阶、坡度与第一/三人称移动，但不等价于真实刚体动力学。,1,Unity客户端开发,物理,技术知识
+Unity 物理中常见的对刚体施力方式有哪些？,常用 AddForce/AddRelativeForce、AddTorque、AddForceAtPosition；配合 ForceMode；运动学移动用 MovePosition/MoveRotation。,2,Unity客户端开发,综合,技术知识
+游戏动画常见有哪几类？各自思路是什么？,关节动画：角色分块网格拼合，实现简单但接缝明显；骨骼动画：骨骼层次+蒙皮网格，主流方案，便于压缩与 IK/重定向；顶点/形态键关键帧：对网格顶点或 BlendShape 插值，表达力强但数据与内存开销大。,4,Unity客户端开发,动画,场景题
+如何让动画反向播放？,将 Animator speed 或 AnimationState.speed 设为 -1，或倒放剪辑；注意根运动与事件帧方向；Root motion 场景需额外处理位移符号。,2,Unity客户端开发,动画,技术知识
+Animator 中 Animation Layer 的作用是什么？,用于身体不同部位或不同逻辑的动画分层与混合（如上半身攻击、下半身移动）；可设权重与遮罩（Avatar Mask）；减少相互覆盖，便于状态机组织。,2,Unity客户端开发,动画,场景题
+Unity 物理中常见的对刚体施力方式有哪些？,常用 Rigidbody.AddForce/AddRelativeForce、AddTorque、AddForceAtPosition（在指定世界坐标施力产生扭矩）等；还可通过 MovePosition/MoveRotation 做运动学式移动；力与冲量模式（ForceMode）影响瞬态与连续效果。,2,Unity客户端开发,综合,技术知识
+物理更新一般放在哪个系统函数里？,应放在 FixedUpdate：物理以固定时间步（Fixed Timestep）推进，与渲染帧率解耦；对 Rigidbody 施力、MovePosition、AddForce 等应在此调用。Update 适合做输入、相机跟随等非物理逻辑。低帧时 FixedUpdate 仍按时间累积调用，可用 Profiler 看 Physics 耗时。,2,Unity客户端开发,综合,技术知识
+优化 Unity 物理系统有哪些实用手段？,静态物体设 Static、简化碰撞体（少用复杂 MeshCollider）、合理 Layer 与触发器逻辑；调 Fixed Timestep、Solver 迭代与睡眠阈值；避免在 FixedUpdate 做重逻辑，寻路/加载可分帧或异步；用 Physics Debugger 与 Profiler 验证。,1,Unity客户端开发,综合,技术知识
+结合 Unity 项目经验，请说明「触发条件」指什么、常见用法及注意点？,OnCollision* 需双方非 Kinematic 刚体运动或刚体碰静态碰撞体；OnTrigger* 至少一方有 Rigidbody 且一方 IsTrigger；物理层碰撞矩阵要允许。,2,Unity客户端开发,综合,技术知识
+结合 Unity 项目经验，请说明「常用关节（Joints）」指什么、常见用法及注意点？,Fixed/Spring/Hinge/Configurable 等约束相对运动；调刚体质量、Solver 迭代与碰撞体形状避免抖动穿模。,2,Unity客户端开发,综合,技术知识
+结合 Unity 项目经验，请说明「碰撞器（Collider）与触发器（Trigger）函数有哪些？」指什么、常见用法及注意点？,OnCollisionEnter/Stay/Exit 与 OnTriggerEnter/Stay/Exit；2D 有对应 2D 版本。,1,Unity客户端开发,物理,技术知识
+结合 Unity 项目经验，请说明「碰撞器（Collider）与触发器（Trigger）的区别？」指什么、常见用法及注意点？,碰撞产生物理响应与接触点；触发器只做重叠检测无物理反弹；触发消息要求 Rigidbody 参与（其一即可，依版本与设置）。,1,Unity客户端开发,物理,技术知识
+结合 Unity 项目经验，请说明「碰撞器（Collider）与触发器（Trigger）函数触发条件？」指什么、常见用法及注意点？,Layer 矩阵勾选、至少一方 Rigidbody（触发）、非休眠刚体、碰撞体启用且尺寸合理；FixedUpdate 步长影响连续碰撞。,2,Unity客户端开发,物理,项目经历深挖
+结合 Unity 项目经验，请说明「CharacterController 与 Rigidbody 区别？」指什么、常见用法及注意点？,CharacterController 运动学移动+内置碰撞滑动，非完整物理模拟；Rigidbody 受力与扭矩驱动，适合真实物理。,1,Unity客户端开发,物理,技术知识
+结合 Unity 项目经验，请说明「物理更新函数」指什么、常见用法及注意点？,物理计算在 FixedUpdate 与内部物理步进；与渲染帧率解耦；对 Rigidbody 施力/移动应在 FixedUpdate；Time.fixedDeltaTime 可调。,2,Unity客户端开发,综合,项目经历深挖
+结合 Unity 项目经验，请说明「工作流程」指什么、常见用法及注意点？,编辑器摆放碰撞体与刚体；运行时 AddForce/MovePosition；触发器做区域逻辑；调 Fixed Timestep 与碰撞检测模式（Discrete/Continuous）。,2,Unity客户端开发,综合,行为题
+结合 Unity 项目经验，请说明「编辑器静态添加」指什么、常见用法及注意点？,在 Scene 里挂 Collider/Rigidbody/Joint，调 Layer 与 IsTrigger；适合关卡几何。,2,Unity客户端开发,综合,项目经历深挖
+结合 Unity 项目经验，请说明「动态添加（运行时代码控制）」指什么、常见用法及注意点？,AddComponent<Rigidbody>() 等；注意初始化顺序与质量、插值设置；销毁时清理关节引用。,2,Unity客户端开发,综合,技术知识
+在运行时通过代码创建并配置刚体、碰撞体与关节时，你通常会怎么做？如何调试？,用 API 创建刚体与碰撞体、设置 layerMask、在 FixedUpdate 驱动；复杂组合用 ConfigurableJoint；调试用 Physics Debugger。,2,Unity客户端开发,综合,场景题
+结合 Unity 项目经验，请说明「新旧动画系统区别？」指什么、常见用法及注意点？,Legacy Animation 组件直接播片段；Mecanim 用 Animator Controller、混合树、状态机与 Avatar 重定向。,1,Unity客户端开发,动画,行为题
+结合 Unity 项目经验，请说明「动画事件机制？」指什么、常见用法及注意点？,在剪辑上挂 Animation Event 调脚本方法；注意事件帧与剪辑速度缩放；避免在事件里做重逻辑。,2,Unity客户端开发,委托与事件,技术知识
+结合 Unity 项目经验，请说明「Mecanim 系统中，Avatar 的作用是什么？」指什么、常见用法及注意点？,骨骼映射与 Humanoid 重定向；统一不同骨架的动画复用；Generic 则用于非人形。,2,Unity客户端开发,综合,技术知识
+结合 Unity 项目经验，请说明「请描述游戏动画有哪几种，以及其原理？」指什么、常见用法及注意点？,关节动画：角色分块网格拼合，实现简单但接缝明显；骨骼动画：骨骼层次+蒙皮网格，主流方案，便于压缩与 IK/重定向；顶点/形态键关键帧：对网格顶点或 BlendShape 插值，表达力强但数据与内存开销大。,4,Unity客户端开发,动画,技术知识
+结合 Unity 项目经验，请说明「如何使用 Mecanim 动画状态机控制角色动画（如行走、奔跑、攻击）？」指什么、常见用法及注意点？,参数驱动状态迁移（Speed、Trigger）；用 BlendTree 混合移动；过渡时间与退出时间防滑步。,2,Unity客户端开发,动画,行为题
+结合 Unity 项目经验，请说明「Animation 和 Animator 的区别是什么？」指什么、常见用法及注意点？,Animation 偏简单播放；Animator 管状态机、层、IK 与重定向，适合复杂角色。,1,Unity客户端开发,动画,技术知识
+结合 Unity 项目经验，请说明「如何进行动画性能优化？」指什么、常见用法及注意点？,减骨骼与蒙皮顶点；Animator.cullingMode、分层与更新频率控制；动画曲线压缩与冗余关键帧剔除。远处角色降采样或切简化 LOD；减少无意义参数抖动；Profiler 关注 Animation、MeshSkinning 与主线程脚本。,2,Unity客户端开发,动画,技术知识
+结合 Unity 项目经验，请说明「简述反向动力学（IK）及其在 Unity 中的应用。」指什么、常见用法及注意点？,由末端姿态反推关节链；Foot IK、LookAt、FinalIK 等；注意权重与地面法线。,1,Unity客户端开发,综合,技术知识
+若面试围绕「射线Raycast原理」展开，在性能敏感的模块中你会如何落地实现与验证效果？,Raycast 走物理场景的粗测+精测；Profiler 看 Physics.Raycast 调用次数与耗时，避免每帧全场景扫。用 LayerMask/距离上限/NonAlloc 变体（如 RaycastNonAlloc）降分配；热点路径可缓存或分帧。注意须在主线程调用物理 API；与触发器、Kinematic 规则相关的命中差异要讲清。,4,Unity客户端开发,物理,行为题
+若被问到「简述 SkinnedMesh 的实现原理」，你会如何组织回答结构（结论、要点、常见坑）？,针对「简述 SkinnedMesh 的实现原理」：先用一句话给结论；再分 2~4 点讲原理或步骤；最后点出 Unity/项目里的坑（性能、内存、线程、版本差异）。如涉资源或渲染，补充你如何用工具有验证（Profiler、Frame Debugger、Memory Profiler）。,3,Unity客户端开发,综合,场景题
+若面试围绕「重载和重写的区别」展开，在性能敏感的模块中你会如何落地实现与验证效果？,重载：同名方法不同签名，编译期绑定；重写：子类 override 虚/抽象方法，运行期多态。性能：多态有轻微虚调用成本；热点路径可 sealed/final 去虚化。结合 Unity 生命周期方法勿混淆隐藏 new。,1,Unity客户端开发,综合,行为题
+若被问到「有哪些常见的数值类？」，你会如何组织回答结构（结论、要点、常见坑）？,针对「有哪些常见的数值类？」：先用一句话给结论；再分 2~4 点讲原理或步骤；最后点出 Unity/项目里的坑（性能、内存、线程、版本差异）。如涉资源或渲染，补充你如何用工具有验证（Profiler、Frame Debugger、Memory Profiler）。,1,Unity客户端开发,综合,场景题
+若面试围绕「Mock和Stub有何区别?」展开，在性能敏感的模块中你会如何落地实现与验证效果？,Mock：可验证交互行为（如是否被调用），常用手写或框架；Stub：返回固定假数据、少关心调用次数。单测里隔离 UnityEngine 对象困难，可抽接口+适配层；注意测试维护成本与过拟合实现细节。,1,Unity客户端开发,综合,行为题
+若被问到「Image和RawImage的区别」，你会如何组织回答结构（结论、要点、常见坑）？,结论：Image 走 Sprite/图集管线，RawImage 直接采样任意 Texture。要点：Image 支持九宫格与多种 Image Type，更利于 UGUI 合批；RawImage 适合 RenderTexture、视频贴图等。坑：RawImage 若材质/贴图与周围 UI 不一致易打断合批；动态纹理需注意释放与尺寸。,1,Unity客户端开发,UI,场景题
+若面试围绕「移动相机动作在哪个函数里，为什么在这个函数里？」展开，在性能敏感的模块中你会如何落地实现与验证效果？,跟随相机常在 LateUpdate 处理，保证在角色 Update 移动之后再对齐，减少抖动。物理相关相机可用 FixedUpdate；Cinemachine 等插件内部已处理更新顺序。性能：避免每帧 GetComponent/LINQ；缓存引用与插值。,2,Unity客户端开发,综合,行为题
+若被问到「请描述为什么Unity3d中会发生在组件上出现数据丢失的情况」，你会如何组织回答结构（结论、要点、常见坑）？,针对「请描述为什么Unity3d中会发生在组件上出现数据丢失的情况」：先用一句话给结论；再分 2~4 点讲原理或步骤；最后点出 Unity/项目里的坑（性能、内存、线程、版本差异）。如涉资源或渲染，补充你如何用工具有验证（Profiler、Frame Debugger、Memory Profiler）。,2,Unity客户端开发,综合,场景题
+若面试围绕「向量的点乘、叉乘以及归一化的意义？」展开，在性能敏感的模块中你会如何落地实现与验证效果？,点乘：a·b=|a||b|cosθ，用于投影、夹角、前向遮挡判断；叉乘：得垂直于两向量的向量，handedness 与 Unity 左/右手系一致。归一化：方向向量单位化避免长度影响；注意零向量与数值稳定。,2,Unity客户端开发,综合,行为题
+若被问到「获取、增加、删除组件的命令分别是什么？」，你会如何组织回答结构（结论、要点、常见坑）？,针对「获取、增加、删除组件的命令分别是什么？」：先用一句话给结论；再分 2~4 点讲原理或步骤；最后点出 Unity/项目里的坑（性能、内存、线程、版本差异）。如涉资源或渲染，补充你如何用工具有验证（Profiler、Frame Debugger、Memory Profiler）。,2,Unity客户端开发,综合,场景题
+若面试围绕「什么是DrawCall？DrawCall高了又什么影响？如何降低DrawCall？」展开，在性能敏感的模块中你会如何落地实现与验证效果？,DrawCall 高增加 CPU 提交与状态切换开销；降法：批处理、SRP Batcher、GPU Instancing、合图集与材质。用 Frame Debugger 看实际批次；透明与多材质会显著抬高。,3,Unity客户端开发,综合,行为题
+若被问到「物体发生碰撞的必要条件？」，你会如何组织回答结构（结论、要点、常见坑）？,条件：双方有 Collider；至少一方带 Rigidbody（含 Kinematic 规则需讲清）；Layer 碰撞矩阵允许；物理启用。落地：简化碰撞体、Continuous 动态阈值、减少动态刚体与复杂 MeshCollider；Profiler 看 Physics 模块。验证：Physics Debug 可视化、重现场景与真机分档。,2,Unity客户端开发,物理,场景题
+若面试围绕「Avator的作用」展开，在性能敏感的模块中你会如何落地实现与验证效果？,应为 Avatar：骨骼映射与 Humanoid/Generic 配置，用于动画重定向与 IK。Humanoid 可复用不同骨架动画；Generic 适合任意骨骼。注意 T-Pose 与骨骼命名匹配。,2,Unity客户端开发,综合,行为题
+若被问到「概述序列化」，你会如何组织回答结构（结论、要点、常见坑）？,针对「概述序列化」：先用一句话给结论；再分 2~4 点讲原理或步骤；最后点出 Unity/项目里的坑（性能、内存、线程、版本差异）。如涉资源或渲染，补充你如何用工具有验证（Profiler、Frame Debugger、Memory Profiler）。,2,Unity客户端开发,综合,场景题
+若面试围绕「MeshRender中material和 sharedmaterial的区别?」展开，在性能敏感的模块中你会如何落地实现与验证效果？,sharedMaterial：共享资产上的材质，改动影响所有引用该材质的 Renderer，并可能写回磁盘资源。material 属性：访问时会为当前 Renderer 创建材质实例，适合单独改色但易打断合批与泄漏。实践：展示只读用 sharedMaterial；需独立参数用 material 并管理实例生命周期。,1,Unity客户端开发,综合,行为题

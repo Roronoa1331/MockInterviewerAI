@@ -1,0 +1,23 @@
+﻿题目,答案要点,难度,相关岗位,标签,题目类型
+说说你对 XSS 的了解,XSS 即跨站脚本攻击，攻击者通过 HTML 注入向网页插入恶意脚本，在用户浏览时执行以窃取信息、控制浏览器，分为反射型、存储型、DOM 型三类，反射型恶意代码在 URL 中，存储型保存在服务端，DOM 型由前端 JS 直接处理不可信数据触发，防御手段包括输入输出转义、设置 HttpOnly、谨慎使用 innerHTML 等危险 API、开启 CSP。,3,web前端开发,前端安全、跨域、localStorage、HTTP、XSS,技术知识
+web常见的攻击方式有哪些，以及如何进行防御？,常见 Web 攻击有 XSS、CSRF、SQL 注入、点击劫持、中间人攻击、网络劫持等，XSS 防御靠输入输出编码、HttpOnly、CSP；CSRF 防御用 Token、SameSite Cookie、校验 Referer；SQL 注入靠参数化查询、过滤特殊字符、输入校验；点击劫持通过 X-Frame-Options、CSP 防护；中间人攻击与网络劫持依赖全站 HTTPS、证书校验、禁用不安全 TLS 版本。,3,web前端开发,前端安全、Cookie、XSS、CSRF,技术知识
+说说你对前端鉴权的理解,前端鉴权是验证用户身份与权限的过程，主流方式有 Session-Cookie、Token、JWT、单点登录 SSO，Session-Cookie 基于服务端会话与客户端 Cookie 维持状态，适合传统 Web；Token 无状态、适合分布式与移动端，JWT 包含身份信息可自校验无需服务端存储；单点登录实现多系统一次登录全量通行，鉴权同时需配合 Cookie 安全属性、接口权限校验提升安全性。,3,web前端开发,前端安全、跨域、localStorage、sessionStorage,技术知识
+如何禁止别人调试自己的前端代码？,禁止调试可通过无限 debugger 阻塞控制台，结合 Function 构造器规避格式化与忽略断点，检测窗口内外尺寸差判断开发者工具打开状态，同时禁用右键菜单、拦截 F12 快捷键，定期检测控制台状态并刷新页面，这些手段可增加调试成本但无法完全阻止专业逆向。,2,web前端开发,前端安全,技术知识
+CSP（Content Security Policy）可以解决什么问题？,CSP 是内容安全策略，通过 HTTP 头或 meta 标签限制资源加载来源与脚本执行权限，有效防御 XSS、数据注入、点击劫持，禁止内联脚本与违规资源加载，控制样式、图片、字体、媒体、连接的可信源，降低恶意代码执行风险，提升页面整体安全性。,2,web前端开发,前端安全、CSP,技术知识
+前端怎么实现跨域请求？,前端跨域主流方案有 CORS、代理服务器、JSONP、postMessage、WebSocket，CORS 由服务端配置响应头实现，支持所有请求类型；开发环境用 webpack-dev-server 代理，生产环境用 Nginx 反向代理；JSONP 仅支持 GET 利用 script 标签跨域；postMessage 用于 iframe 与窗口通信；WebSocket 不受同源策略限制，可直接跨域通信。,4,web前端开发,前端安全、同源策略、跨域、localStorage,场景题
+HTTPS 有哪些优点？,HTTPS 基于 TLS 加密传输，实现身份认证、数据加密、完整性校验，防止窃听、篡改、中间人攻击，保护 Cookie、账号、隐私数据安全，提升搜索引擎排名，避免运营商劫持插入广告，增强用户信任，是现代 Web 安全的基础配置。,3,web前端开发,前端安全、HTTP、HTTPS,技术知识
+webSocket 有哪些安全问题，应该如何应对？,WebSocket 面临 CSRF / 劫持、身份伪造、明文传输、DoS、XSS 注入等风险，应对方式包括使用 wss 加密传输、校验 Origin 头防止跨域劫持、身份鉴权与 Token 校验、限制单 IP 连接数防御 DoS、对消息内容过滤转义防 XSS、合理关闭闲置连接提升安全性。,3,web前端开发,前端安全、同源策略、跨域、Cookie、WebSocket,技术知识
+什么是点击劫持？如何防范点击劫持？,点击劫持是攻击者用透明 iframe 嵌入目标页面，诱导用户点击执行恶意操作，防范手段是服务端设置 X-Frame-Options 响应头限制 iframe 嵌套，配合 CSP 指令 frame-ancestors 控制可信父页面，避免页面被第三方嵌入展示。,2,web前端开发,前端安全、HTTP、点击劫持,技术知识
+什么是 Samesite Cookie 属性？,SameSite 是 Cookie 的安全属性，用于控制跨站请求时是否携带 Cookie，分为 Strict 严格模式、Lax 宽松模式、None 允许跨站，必须配合 Secure 使用，用于防御 CSRF 与用户追踪，是现代浏览器默认安全机制。,3,web前端开发,前端安全、跨域、Cookie、Set,技术知识
+Cookie 的 SameSite 属性有什么作用？,SameSite 用于限制第三方 Cookie 发送，Strict 完全禁止跨站携带，Lax 仅允许导航类 GET 请求携带，None 允许跨站但需 HTTPS，有效阻止 CSRF 攻击，减少用户行为追踪，提升 Cookie 安全性与隐私保护能力。,2,web前端开发,前端安全、Cookie、HTTP、HTTPS,技术知识
+cookie中的 HttpOnly 属性有什么用途？,HttpOnly 属性使 Cookie 无法被 JavaScript 的 document.cookie 访问，只能由浏览器在请求时自动携带，有效防止 XSS 攻击窃取登录凭证与敏感 Cookie，是防御 XSS 后会话劫持的核心手段。,2,web前端开发,前端安全、Cookie、XSS,技术知识
+前端的常规安全策略,前端常规安全策略包括输入校验与转义、启用 HTTPS、配置安全响应头、Cookie 设置 HttpOnly/Secure/SameSite、防御 XSS/CSRF、静态资源完整性校验、定期漏洞扫描、Code Review、依赖库安全检测、最小权限原则、日志监控与异常上报。,3,web前端开发,前端安全、XSS,技术知识
+静态资源完整性校验,静态资源完整性校验即 SRI，通过在 script/link 标签添加 integrity 属性，指定资源的哈希值，浏览器加载前校验文件哈希是否匹配，防止 CDN 劫持、资源被篡改注入恶意代码，保障第三方脚本与样式的安全可信。,2,web前端开发,前端安全、CDN、哈希,技术知识
+前端数据安全,前端数据安全主要防范数据泄露、篡改、爬虫抓取，手段包括敏感数据加密存储、接口返回脱敏、反爬虫策略（字体加密、伪元素、定位偏移、异步渲染）、禁止明文存储密码与 Token、限制接口频率与权限、关键操作二次验证。,3,web前端开发,前端安全、伪元素,技术知识
+iframe 安全,iframe 存在点击劫持、跨域通信、第三方恶意内容风险，防护方式为设置 sandbox 限制权限、服务端配置 X-Frame-Options、使用 CSP 限制嵌套来源、避免嵌入不信任第三方页面、严格控制 postMessage 数据接收与校验。,3,web前端开发,前端安全、CSP、点击劫持,技术知识
+sql 注入,SQL 注入是攻击者在输入参数拼接恶意 SQL 语句，欺骗数据库执行非授权操作，导致数据泄露、篡改、删库，防御靠参数化查询、预编译语句、输入过滤特殊字符、最小数据库权限、服务端严格校验、使用 ORM 框架避免手写拼接 SQL。,3,web前端开发,前端安全,技术知识
+网络劫持,网络劫持包括 DNS 劫持与 HTTP 劫持，DNS 劫持篡改域名指向，HTTP 劫持篡改响应插入广告或恶意代码，防御方案为全站 HTTPS、DNS 加密、证书固定、配置安全 DNS、开启 HSTS 强制加密访问。,2,web前端开发,前端安全、HTTP、HTTPS、DNS,技术知识
+CSRF攻击及防护,CSRF 跨站请求伪造，攻击者利用用户登录态诱导发起恶意请求，冒充用户操作，防护手段包括使用 CSRF Token、Cookie 设置 SameSite、校验 Referer/Origin、关键操作验证码、接口权限校验、避免敏感操作使用 GET 请求。,3,web前端开发,前端安全、CSRF、Token,技术知识
+中间人攻击,中间人攻击是攻击者拦截并篡改通信双方数据，窃听、伪造、替换内容，常见于公共 Wi-Fi，防御依赖 HTTPS 证书校验、禁用不安全加密套件、证书固定、不安装未知根证书、避免使用不明代理与公共网络传输敏感信息。,2,web前端开发,前端安全、缓存,技术知识
+点击劫持,点击劫持是视觉欺骗攻击，用透明 iframe 覆盖诱导用户点击，执行未授权操作，防御核心是设置 X-Frame-Options 响应头拒绝被嵌套，配合 CSP 的 frame-ancestors 限制可信父页面来源，彻底阻止第三方页面嵌入。,2,web前端开发,前端安全、HTTP、点击劫持,技术知识
+,,,,,

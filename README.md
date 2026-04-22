@@ -10,7 +10,7 @@ https://jobmatchai-roroma.streamlit.app/
 - Persona-driven interviewer prompt with conversation memory.
 - Resume upload (PDF or text) with tech stack summary and project-aware question seeding.
 - Structured interview flow: intro, technical deep dive, behavioral, polite conclusion.
-- Automated evaluation report (score, strengths, weaknesses, sample answers).
+- Automated evaluation report with five-dimension scoring, strengths, weaknesses, recommendations, and a radar chart summary.
 - Coding sandbox: execute candidate code for coding questions with stdout/error capture.
 - Configurable model backend (OpenAI or Ollama) via environment variables.
 
@@ -38,8 +38,16 @@ python -m streamlit run streamlit_app.py
 ## Configuration
 - `MODEL_BACKEND`: `openai`, `deepseek`, `gemini`, or `ollama`.
 - `MODEL_NAME`: e.g., `gpt-4o-mini`, `deepseek-chat`, `gemini-1.5-flash-latest`, or `llama3`.
+- Gemini shorthand names such as `gemini-2.5` and `gemini-lite` are normalized to `gemini-2.5-flash`.
+- Gemini free-tier quotas are low; evaluation reports now use a single Gemini call, but repeated runs can still hit 429 if you exceed the project limit.
 - `SYSTEM_PERSONA`: optional override for the interviewer persona prompt.
 - `OPENAI_API_KEY`, `DEEPSEEK_API_KEY`, `GEMINI_API_KEY`, or `OLLAMA_BASE_URL`: set in `.env` for local dev.
+
+Question bank paths (useful when merging branches / different folder layouts):
+- `JOBMATCH_BANK_FRONTEND_DIR`: frontend question bank directory (contains topic subfolders + CSVs).
+     - Default auto-detect: prefer `知识库-前端/题库`, fallback to `questionBank1`.
+- `JOBMATCH_BANK_UNITY_DIR`: game/unity question bank directory (contains topic subfolders + CSVs).
+     - Default auto-detect: prefer `知识库-游戏/题库`, fallback to `questionBank2`.
 
 ## Repository Structure
 - `streamlit_app.py` – UI entry point and session orchestration.
@@ -52,8 +60,10 @@ python -m streamlit run streamlit_app.py
   - `sandbox.py` – constrained code execution helper (Track B).
   - `retriever.py` – RAG retrieval module over the Chroma vector store.
   - `kb_build.py` – one-shot build script to index CSV question banks + KB docs.
-- `questionBank1/` – 前端岗位题库（17 个主题，~1260 道题）
-- `questionBank2/` – Unity 游戏客户端岗位题库（13 个主题，~980 道题）
+- `知识库-前端/题库/` – （优先使用）前端岗位题库（CSV 结构与 `questionBank1` 一致）
+- `知识库-游戏/题库/` – （优先使用）Unity / 游戏客户端岗位题库（CSV 结构与 `questionBank2` 一致）
+- `questionBank1/` – 前端岗位题库（legacy fallback）
+- `questionBank2/` – Unity 游戏客户端岗位题库（legacy fallback）
 - `kb/` – 岗位知识文档（role_frontend.md / role_unity.md），按二级标题分段入库
 - `vector_store/` – 预构建的 Chroma 向量库（2261 chunks，已 commit，无需重新构建）
 
@@ -64,13 +74,16 @@ python -m streamlit run streamlit_app.py
 ### 架构说明
 
 ```
-questionBank1/ + questionBank2/ + kb/*.md
+知识库-前端/题库 (fallback: questionBank1/) + 知识库-游戏/题库 (fallback: questionBank2/) + kb/*.md
         ↓ python -m jobmatch_ai.kb_build
    vector_store/  (Chroma PersistentClient, cosine 距离)
         ↓ 运行时
    jobmatch_ai/retriever.py  →  interview_flow.py (出题)
                               →  evaluation.py (评分)
 ```
+
+Notes:
+- 当前仅索引题库（`*/题库` 下 CSV）+ `kb/*.md`；`知识库-前端/` 与 `知识库-游戏/` 下的其他文件夹（岗位能力要求/核心技术栈说明/优秀回答范例/评分维度与规则）暂不纳入 RAG。
 
 - **Embedding 模型**：`BAAI/bge-small-zh-v1.5`（本地、CPU 可运行、中文优化），通过 `sentence-transformers` 加载。
 - **向量库**：`chromadb.PersistentClient`，存储于 `vector_store/`。
@@ -112,3 +125,4 @@ INFO:   Type 'question': 2240 chunks
 ## What’s new
 - Follow-up questioning: after every candidate answer, the next interviewer turn asks exactly one targeted follow-up before moving on.
 - Accounts + persistence: when logged in, interviews/messages are stored in Supabase (cloud Postgres) and a simple stats chart is shown.
+- Evaluation report: the post-interview summary now uses the competition-aligned five dimensions and renders a Plotly radar chart above the Markdown report.
